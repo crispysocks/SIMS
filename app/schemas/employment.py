@@ -30,7 +30,5 @@ class EmploymentRead(BaseModel):
     work_location: str | None
     contract_date: date | None
     isdeleted: int
-    created_at: date
-    updated_at: date
 
     model_config = ConfigDict(from_attributes=True)

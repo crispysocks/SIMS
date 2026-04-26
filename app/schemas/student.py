@@ -63,8 +63,6 @@ class StudentRead(BaseModel):
     gender: str
     phone: str | None
     id_card: str | None
-    created_at: date
-    updated_at: date
 
     class Config:
         from_attributes = True

@@ -60,15 +60,46 @@ def student_response(new_student):
         'gender': new_student.gender,
         'phone': new_student.phone,
         'id_card': new_student.id_card,
-        'created_at': new_student.created_at,
-        'updated_at': new_student.updated_at,
     }
 
 
 def add_student_db(db: Session, new_student: Student):
-    """添加单个学生。"""
+    """添加单个学生。
+
+    若该学生已有被软删除的记录，则复用该记录并更新字段。
+    """
+    existing = (
+        db.query(Student)
+        .filter(Student.student_no == new_student.student_no)
+        .first()
+    )
+
+    if existing:
+        if existing.isdeleted == 0:
+            return None
+
+        existing.isdeleted = 0
+        existing.class_no = new_student.class_no
+        existing.name = new_student.name
+        existing.birth_place = new_student.birth_place
+        existing.graduate_school = new_student.graduate_school
+        existing.major = new_student.major
+        existing.entrance_time = new_student.entrance_time
+        existing.graduate_time = new_student.graduate_time
+        existing.education = new_student.education
+        existing.advisor_name = new_student.advisor_name
+        existing.age = new_student.age
+        existing.gender = new_student.gender
+        existing.phone = new_student.phone
+        existing.id_card = new_student.id_card
+        db.commit()
+        db.refresh(existing)
+        return existing
+
     db.add(new_student)
     db.commit()
+    db.refresh(new_student)
+    return new_student
 
 
 def update_student_db(db: Session, student_no: str, update_student: Student):

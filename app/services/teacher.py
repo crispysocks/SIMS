@@ -20,6 +20,32 @@ def list_teachers(db: Session) -> list[Teacher]:
 
 
 def create_teacher(db: Session, data: TeacherCreate) -> Teacher:
+    existing = (
+        db.query(Teacher)
+        .filter(Teacher.teacher_no == data.teacher_no)
+        .first()
+    )
+
+    if existing:
+        if existing.isdeleted == 0:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail='教师编号已存在',
+            )
+
+        existing.isdeleted = 0
+        existing.name = data.name
+        existing.gender = data.gender
+        existing.phone = data.phone
+        existing.email = data.email
+        existing.id_card = data.id_card
+        existing.birthday = data.birthday
+        existing.hire_date = data.hire_date
+        existing.subject = data.subject
+        db.commit()
+        db.refresh(existing)
+        return existing
+
     teacher = Teacher(**data.model_dump())
     db.add(teacher)
     db.commit()

@@ -15,5 +15,3 @@ class ClassInfo(Base):
     instructor_no = Column(String(20), ForeignKey('teachers.teacher_no', ondelete='SET NULL'), comment='授课老师编号')
     description = Column(String(500), comment='班级描述')
     isdeleted = Column(Integer, default=0, comment='逻辑删除标记 0=正常 1=已删除')
-    created_at = Column(Date, nullable=False, comment='创建时间')
-    updated_at = Column(Date, nullable=False, comment='更新时间')

@@ -6,7 +6,7 @@ from app.dependencies import CurrentUser, get_current_user, require_role
 from app.schemas.employment import EmploymentRead, EmploymentUpsert
 from app.services import employment as employment_service
 
-router = APIRouter(prefix='/employment', tags=['就业管理'])
+router = APIRouter(prefix='/employment', tags=['就业管理v1'])
 
 
 @router.get('/students/{student_no}', response_model=EmploymentRead)

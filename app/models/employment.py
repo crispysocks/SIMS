@@ -18,5 +18,3 @@ class Employment(Base):
     work_location = Column(String(100), comment='工作地点')
     contract_date = Column(Date, comment='签约日期')
     isdeleted = Column(Integer, default=0, comment='逻辑删除标记 0=正常 1=已删除')
-    created_at = Column(Date, nullable=False, comment='创建时间')
-    updated_at = Column(Date, nullable=False, comment='更新时间')

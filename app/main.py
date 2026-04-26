@@ -4,6 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.api import (
     classes_router,
     employment_router,
+    employment_v2_router,
     scores_router,
     statistics_router,
     students_router,
@@ -26,6 +27,7 @@ app.include_router(students_router)
 app.include_router(classes_router)
 app.include_router(scores_router)
 app.include_router(employment_router)
+app.include_router(employment_v2_router, prefix='/v2')
 app.include_router(statistics_router)
 app.include_router(teachers_router)
 

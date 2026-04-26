@@ -44,7 +44,5 @@ class ScoreRead(BaseModel):
     exam_date: date | None
     remark: str | None
     isdeleted: int
-    created_at: date
-    updated_at: date
 
     model_config = ConfigDict(from_attributes=True)

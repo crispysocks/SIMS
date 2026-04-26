@@ -1,12 +1,16 @@
 from datetime import date
 
 from pydantic import BaseModel, ConfigDict, Field
+from enum import Enum
 
+class Gender(str, Enum):
+    男 = '男'
+    女 = '女'
 
 class TeacherBase(BaseModel):
     teacher_no: str = Field(..., min_length=1, max_length=20, description='老师编号')
     name: str = Field(..., min_length=1, max_length=50, description='老师姓名')
-    gender: str = Field(..., max_length=10, description='性别')
+    gender: Gender = Field(..., description='性别：男/女')
     phone: str | None = Field(None, max_length=20, description='联系电话')
     email: str | None = Field(None, max_length=100, description='电子邮箱')
     id_card: str | None = Field(None, max_length=18, description='身份证号')
@@ -34,5 +38,3 @@ class TeacherRead(TeacherBase):
     model_config = ConfigDict(from_attributes=True)
 
     isdeleted: int
-    created_at: date
-    updated_at: date

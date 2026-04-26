@@ -24,16 +24,29 @@ def list_classes(db: Session) -> list[ClassInfo]:
 
 
 def create_class(db: Session, data: ClassCreate) -> ClassInfo:
-    exists = (
+    existing = (
         db.query(ClassInfo)
         .filter(ClassInfo.class_no == data.class_no)
         .first()
     )
-    if exists:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail='班级编号已存在',
-        )
+
+    if existing:
+        if existing.isdeleted == 0:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail='班级编号已存在',
+            )
+
+        existing.isdeleted = 0
+        existing.class_name = data.class_name
+        existing.class_open_time = data.class_open_time
+        existing.head_teacher_no = data.head_teacher_no
+        existing.instructor_no = data.instructor_no
+        existing.description = data.description
+        db.commit()
+        db.refresh(existing)
+        return existing
+
     class_info = ClassInfo(**data.model_dump())
     db.add(class_info)
     db.commit()

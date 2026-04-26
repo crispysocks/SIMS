@@ -30,8 +30,6 @@ class ClassRead(ClassBase):
     model_config = ConfigDict(from_attributes=True)
 
     isdeleted: int
-    created_at: date
-    updated_at: date
 
 
 class ClassReadDetail(ClassRead):
