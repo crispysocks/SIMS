@@ -2,34 +2,35 @@
 
 ## Project Overview
 
-FastAPI Student Management System (SIMS). Single-package Python project with `app/` as the main module.
+FastAPI Student Management System (SIMS). Python 3.12 + SQLAlchemy + MySQL.
 
-## Python & Toolchain
+## Commands
 
-- **Python 3.12** required (`.python-version`). Use `uv` for dependency management.
-- No `uv.lock` entry points defined — `uv run fastapi dev` or `uv run uvicorn app.main:app --reload` is the typical dev start.
-- No tests, no lint config, no pre-commit hooks.
-
-## App Architecture
-
-- `app/` is the root package. All imports go through it (e.g., `from app.core.config import settings`, not `from app.core.database import ...`).
-- **Existing stub modules that import wrong** — `app/core/database.py` imports `from app.config import settings` (should be `app.core.config`). `app/services/student.py` imports `from app.database import get_db` and `from app.dependencies import get_current_user, require_role` (neither module exists yet). When building out these features, fix imports to match the actual file locations.
-- `app/main.py` is empty. Add `app` routers here.
-- Empty but referenced packages to implement: `app/models/`, `app/schemas/`, `app/api/`, `app/dependencies.py`, `app/utils/`.
+- **Dev server**: `uv run fastapi dev` or `uv run uvicorn app.main:app --reload`
+- **Tests**: `uv run pytest`
+- **Sync deps**: `uv sync`
 
 ## Database
 
-- MySQL, database name `student_management`. Configured in `app/core/config.py` via `Settings`.
-- Default MySQL credentials in config: `root` / `your_password`. Override with a `.env` file (loaded automatically by Pydantic Settings).
-- `app/core/database.py` creates the SQLAlchemy engine and `SessionLocal` / `get_db`.
+- MySQL, database `student_management`. Auto-creates on startup via `app/core/database.py`.
+- Config in `.env` (see `.env.example`). Key vars: `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD`, `CORS_ORIGINS` (JSON string), `UPLOAD_DIR`.
+- Default CORS: `http://localhost:5173` only.
 
-## Configuration
+## Architecture
 
-- Settings class in `app/core/config.py` with `case_sensitive=True` (all env vars must be UPPER_SNAKE_CASE).
-- Key settings: `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD`, `CORS_ORIGINS` (JSON string), `UPLOAD_DIR`, `MAX_FILE_SIZE`.
-- CORS default allows only `http://localhost:5173`.
+- `app/` is root package. Use `from app.core.config import settings` (not `from app.config`).
+- Entry point: `app/main.py` (includes all routers on startup, calls `init_db()`).
+- Auth: Header-based (`X-User`, `X-Roles`). Default roles: `admin`, `teacher`. See `app/dependencies.py`.
 
-## Development Quirks
+## Key Files
 
-- Upload path in `app/services/student.py` hardcodes `./backend/uploads/` — this directory does not exist by default.
-- Excel import expects columns matching `Student` model fields directly (e.g., `student_no`, `name`, `gender`, `grade`, etc.).
+- `app/core/config.py` — Settings class with `case_sensitive=True` (env vars must be UPPER_SNAKE_CASE).
+- `app/core/database.py` — Engine, SessionLocal, get_db, init_db.
+- `app/api/` — All route modules.
+- `app/models/` — SQLAlchemy models.
+- `app/schemas/` — Pydantic schemas.
+
+## Quirks
+
+- Upload path `./backend/uploads` hardcoded in some services — directory doesn't exist by default, create it if needed.
+- Excel import expects columns matching `Student` model fields (`student_no`, `name`, `gender`, `grade`, etc.).
