@@ -28,3 +28,8 @@ htmlcov/
 # OS
 .DS_Store
 Thumbs.db
+
+# Local files
+PROMPT
+TEST_GUIDE.md
+REPORT.md
