@@ -61,29 +61,41 @@ def get_students_always_above_score(db: Session, score: int = 80) -> list[dict]:
         for row in rows
     ]
 
-
 def get_students_failed_twice_or_more(db: Session) -> list[dict]:
     """查询两次及以上不及格的学生及对应成绩。"""
-    failed_ids = (
+    # 第一步：获取有两门或以上不及格课程的学生ID列表（只统计有效成绩）
+    failed_ids_result = (
         db.query(Score.student_id)
         .filter(Score.status == 1, Score.score < 60)
         .group_by(Score.student_id)
         .having(func.count(Score.id) >= 2)
-        .subquery()
+        .all()
     )
+    # 提取出学生ID
+    failed_ids = [row.student_id for row in failed_ids_result]
+
+    # 如果没有这样的学生，直接返回空列表
+    if not failed_ids:
+        return []
+
+    # 第二步：查询这些学生的具体不及格成绩和基本信息
     rows = (
         db.query(Student.name, Student.class_id, Score.score)
         .join(Score, Score.student_id == Student.id)
-        .filter(Student.status == 1, Score.status == 1, Score.score < 60, Student.id.in_(failed_ids))
+        .filter(
+            Student.status == 1,
+            Score.status == 1,
+            Score.score < 60,
+            Student.id.in_(failed_ids)
+        )
         .order_by(Student.class_id, Student.id)
         .all()
     )
+
     return [
         {'student_name': row.name, 'class_id': row.class_id, 'score': row.score}
         for row in rows
     ]
-
-
 def get_class_avg_scores_by_exam(db: Session) -> list[dict]:
     """统计每个班级的平均成绩并按分数倒序排列。"""
     rows = (
