@@ -1,15 +1,23 @@
-from sqlalchemy import Column, Integer
+from datetime import date
+
+from sqlalchemy import Column, Date, ForeignKey, Integer, Numeric, String, PrimaryKeyConstraint
 
 from app.core.database import Base
 
 
 class Score(Base):
-    """???????"""
-
     __tablename__ = 'scores'
 
-    id = Column(Integer, primary_key=True, autoincrement=True, comment='??ID')
-    student_id = Column(Integer, nullable=False, comment='??ID')
-    exam_order = Column(Integer, nullable=False, comment='????')
-    score = Column(Integer, nullable=False, comment='??')
-    status = Column(Integer, nullable=False, default=1, comment='?? 1?? 0??')
+    student_no = Column(String(20), ForeignKey('students.student_no', ondelete='CASCADE'), nullable=False, comment='学生编号')
+    exam_no = Column(Integer, nullable=False, comment='考核序次')
+    exam_name = Column(String(50), nullable=False, comment='考试名称')
+    score = Column(Numeric(5, 2), nullable=False, comment='成绩')
+    exam_date = Column(Date, comment='考核日期')
+    remark = Column(String(200), comment='备注')
+    isdeleted = Column(Integer, default=0, comment='逻辑删除标记 0=正常 1=已删除')
+    created_at = Column(Date, nullable=False, comment='创建时间')
+    updated_at = Column(Date, nullable=False, comment='更新时间')
+
+    __table_args__ = (
+        PrimaryKeyConstraint('student_no', 'exam_no', 'exam_name'),
+    )

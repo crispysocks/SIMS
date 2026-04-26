@@ -16,49 +16,55 @@ class Education(str, Enum):
 
 
 class StudentCreate(BaseModel):
-    student_id: int = Field(..., description='学生编号，唯一')
-    class_id: int = Field(..., description='班级编号')
-    student_name: str = Field(..., min_length=1, max_length=50, description='学生姓名，非空')
-    hometown: str | None = Field(None, max_length=100, description='籍贯')
-    graduate_school: str = Field(..., max_length=100, description='毕业院校')
-    major: str = Field(..., max_length=50, description='专业，非空')
-    enroll_date: date = Field(..., description='入学日期')
-    graduate_date: date = Field(..., description='毕业日期')
-    education: Education = Field(..., description='学历：专科/本科/硕士')
-    advisor_id: int = Field(..., description='顾问编号')
-    age: int = Field(..., gt=0, lt=100, description='年龄 1-99')
+    student_no: str = Field(..., min_length=1, max_length=20, description='学生编号，唯一')
+    class_no: str = Field(..., min_length=1, max_length=20, description='班级编号')
+    name: str = Field(..., min_length=1, max_length=50, description='学生姓名，非空')
+    birth_place: str | None = Field(None, max_length=100, description='籍贯')
+    graduate_school: str | None = Field(None, max_length=100, description='毕业院校')
+    major: str | None = Field(None, max_length=50, description='专业')
+    entrance_time: date = Field(..., description='入学时间')
+    graduate_time: date | None = Field(None, description='毕业时间')
+    education: str | None = Field(None, max_length=20, description='学历')
+    advisor_name: str | None = Field(None, max_length=50, description='顾问姓名')
+    age: int | None = Field(None, gt=0, lt=100, description='年龄 1-99')
     gender: Gender = Field(..., description='性别：男/女')
-    status: int = Field(1, description='状态 1可查询0不可查询')
+    phone: str | None = Field(None, max_length=20, description='联系电话')
+    id_card: str | None = Field(None, max_length=18, description='身份证号')
 
 
 class StudentUpdate(BaseModel):
-    class_id: int | None = None
-    student_name: str | None = Field(None, min_length=1, max_length=50)
-    hometown: str | None = Field(None, max_length=100)
+    class_no: str | None = Field(None, max_length=20)
+    name: str | None = Field(None, min_length=1, max_length=50)
+    birth_place: str | None = Field(None, max_length=100)
     graduate_school: str | None = Field(None, max_length=100)
     major: str | None = Field(None, max_length=50)
-    enroll_date: date | None = None
-    graduate_date: date | None = None
-    education: Education | None = None
-    advisor_id: int | None = None
+    entrance_time: date | None = None
+    graduate_time: date | None = None
+    education: str | None = Field(None, max_length=20)
+    advisor_name: str | None = Field(None, max_length=50)
     age: int | None = Field(None, gt=0, lt=100)
     gender: Gender | None = None
-    status: int | None = None
+    phone: str | None = Field(None, max_length=20)
+    id_card: str | None = Field(None, max_length=18)
 
 
 class StudentRead(BaseModel):
-    student_id: int
-    class_id: int
-    student_name: str
-    hometown: str | None
+    student_no: str
+    class_no: str
+    name: str
+    birth_place: str | None
     graduate_school: str | None
-    major: str
-    enroll_date: date
-    graduate_date: date | None
-    education: str
-    advisor_id: int
-    age: int
+    major: str | None
+    entrance_time: date
+    graduate_time: date | None
+    education: str | None
+    advisor_name: str | None
+    age: int | None
     gender: str
+    phone: str | None
+    id_card: str | None
+    created_at: date
+    updated_at: date
 
     class Config:
         from_attributes = True

@@ -1,51 +1,42 @@
-from fastapi import APIRouter, Depends, Query, status
+from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
-from app.dependencies import CurrentUser, get_current_user, require_role
-from app.schemas.classes import ClassCreate, ClassRead, ClassUpdate
+from app.schemas.classes import ClassCreate, ClassRead, ClassReadDetail, ClassUpdate
 from app.services import classes as class_service
 
-router = APIRouter(prefix='/api/classes', tags=['班级管理'])
+router = APIRouter(prefix='/classes', tags=['班级管理模块'])
 
 
-@router.get('/', response_model=list[ClassRead])
-def get_classes(
-    class_name: str | None = Query(default=None),
-    current_user: CurrentUser = Depends(get_current_user),
-    db: Session = Depends(get_db),
-):
-    """查询班级列表。"""
-    return class_service.list_classes(db, class_name)
+@router.get('', response_model=list[ClassRead], summary='获取班级列表')
+def list_classes(db: Session = Depends(get_db)) -> list[ClassRead]:
+    return class_service.list_classes(db)
 
 
-@router.post('/', response_model=ClassRead, status_code=status.HTTP_201_CREATED)
-def create_class(
-    data: ClassCreate,
-    current_user: CurrentUser = Depends(require_role(['admin', 'teacher'])),
-    db: Session = Depends(get_db),
-):
-    """创建新的班级。"""
+@router.post(
+    '',
+    response_model=ClassRead,
+    status_code=status.HTTP_201_CREATED,
+    summary='创建班级',
+)
+def create_class(data: ClassCreate, db: Session = Depends(get_db)) -> ClassRead:
     return class_service.create_class(db, data)
 
 
-@router.put('/{class_id}', response_model=ClassRead)
+@router.get('/{class_no}', response_model=ClassReadDetail, summary='获取班级详情')
+def get_class(class_no: str, db: Session = Depends(get_db)) -> ClassReadDetail:
+    return class_service.get_class_by_no(db, class_no)
+
+
+@router.put('/{class_no}', response_model=ClassRead, summary='更新班级信息')
 def update_class(
-    class_id: int,
+    class_no: str,
     data: ClassUpdate,
-    current_user: CurrentUser = Depends(require_role(['admin', 'teacher'])),
     db: Session = Depends(get_db),
-):
-    """更新指定班级信息。"""
-    return class_service.update_class(db, class_id, data)
+) -> ClassRead:
+    return class_service.update_class(db, class_no, data)
 
 
-@router.delete('/{class_id}', status_code=status.HTTP_204_NO_CONTENT)
-def delete_class(
-    class_id: int,
-    current_user: CurrentUser = Depends(require_role(['admin'])),
-    db: Session = Depends(get_db),
-):
-    """逻辑删除指定班级。"""
-    class_service.delete_class(db, class_id)
-    return None
+@router.delete('/{class_no}', response_model=ClassRead, summary='删除班级')
+def delete_class(class_no: str, db: Session = Depends(get_db)) -> ClassRead:
+    return class_service.delete_class(db, class_no)

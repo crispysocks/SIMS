@@ -1,37 +1,39 @@
-from datetime import date, datetime
+from datetime import date
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from app.schemas.teacher import TeacherRead
 
-class ClassCreate(BaseModel):
-    """班级新增请求模型。"""
 
-    class_name: str = Field(min_length=1, max_length=50, description='班级名称')
-    start_time: date | None = Field(default=None, description='开课时间')
-    head_teacher_id: int | None = Field(default=None, description='班主任ID')
-    lecturer_id: int | None = Field(default=None, description='授课老师ID')
+class ClassBase(BaseModel):
+    class_no: str = Field(..., min_length=1, max_length=20, description='班级编号')
+    class_name: str = Field(..., min_length=1, max_length=50, description='班级名称')
+    class_open_time: date = Field(..., description='开课时间')
+    head_teacher_no: str | None = Field(None, max_length=20, description='班主任编号')
+    instructor_no: str | None = Field(None, max_length=20, description='授课老师编号')
+    description: str | None = Field(None, max_length=500, description='班级描述')
+
+
+class ClassCreate(ClassBase):
+    pass
 
 
 class ClassUpdate(BaseModel):
-    """班级更新请求模型。"""
-
-    class_name: str | None = Field(default=None, min_length=1, max_length=50)
-    start_time: date | None = None
-    head_teacher_id: int | None = None
-    lecturer_id: int | None = None
-    is_deleted: int | None = Field(default=None, ge=0, le=1)
+    class_name: str | None = Field(None, min_length=1, max_length=50)
+    class_open_time: date | None = None
+    head_teacher_no: str | None = Field(None, max_length=20)
+    instructor_no: str | None = Field(None, max_length=20)
+    description: str | None = Field(None, max_length=500)
 
 
-class ClassRead(BaseModel):
-    """班级详情响应模型。"""
-
-    class_id: int
-    class_name: str
-    start_time: date | None = None
-    head_teacher_id: int | None = None
-    lecturer_id: int | None = None
-    is_deleted: int
-    create_time: datetime | None = None
-    update_time: datetime | None = None
-
+class ClassRead(ClassBase):
     model_config = ConfigDict(from_attributes=True)
+
+    isdeleted: int
+    created_at: date
+    updated_at: date
+
+
+class ClassReadDetail(ClassRead):
+    headteacher: TeacherRead | None = None
+    instructor: TeacherRead | None = None

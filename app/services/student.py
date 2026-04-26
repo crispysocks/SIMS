@@ -1,85 +1,93 @@
 from fastapi import HTTPException
-from app.core.database import get_db  # noqa: E402
+from sqlalchemy.orm import Session
 
 from app.models.student import Student
 
 
-def chick_status(new_student_id):  # noqa: D103
-    db = next(get_db())
+def chick_status(db: Session, new_student_no: str):
+    """检查学生状态，0返回False，1返回True。"""
     result = db.query(Student).all()
     for student in result:
-        if student.student_id == new_student_id:
-            if student.status == 0:
+        if student.student_no == new_student_no:
+            if student.isdeleted == 1:
                 return False
             else:
                 return True
 
 
-def chick_student(new_student_id):  # noqa: D103
-    db = next(get_db())
+def chick_student(db: Session, new_student_no: str):
+    """查询学生是否存在，存在返回True，不存在返回False。"""
     result = db.query(Student).all()
     for student in result:
-        if student.student_id == new_student_id:
+        if student.student_no == new_student_no:
             return True
     return False
 
 
-def get_students_db():  # noqa: D103
+def get_students_db(db: Session):
+    """获取所有学生信息，包括状态。"""
     list1 = []
-    db = next(get_db())
     result = db.query(Student).all()
     for student in result:
-        bool1 = chick_status(student.student_id)
+        bool1 = chick_status(db, student.student_no)
         if bool1 is True:
             list1.append(student)
-
     return list1
 
 
-def get_student_db(student_id):  # noqa: D103
-    db = next(get_db())
-    result = db.query(Student).filter(Student.student_id == student_id).first()
+def get_student_db(db: Session, student_no: str):
+    """获取某个学生的信息。"""
+    result = db.query(Student).filter(Student.student_no == student_no).first()
     return result
 
 
-def student_response(new_student):  # noqa: D103
+def student_response(new_student):
+    """公共响应体函数，返回学生信息（没有状态的信息）。"""
+    if new_student is None:
+        return None
     return {
-        'student_id': new_student.student_id,
-        'class_id': new_student.class_id,
-        'student_name': new_student.student_name,
-        'hometown': new_student.hometown,
+        'student_no': new_student.student_no,
+        'class_no': new_student.class_no,
+        'name': new_student.name,
+        'birth_place': new_student.birth_place,
         'graduate_school': new_student.graduate_school,
         'major': new_student.major,
-        'enroll_date': new_student.enroll_date,
-        'graduate_date': new_student.graduate_date,
+        'entrance_time': new_student.entrance_time,
+        'graduate_time': new_student.graduate_time,
         'education': new_student.education,
-        'advisor_id': new_student.advisor_id,
+        'advisor_name': new_student.advisor_name,
         'age': new_student.age,
         'gender': new_student.gender,
+        'phone': new_student.phone,
+        'id_card': new_student.id_card,
+        'created_at': new_student.created_at,
+        'updated_at': new_student.updated_at,
     }
 
 
-def add_student_db(new_student):  # noqa: D103
-    db = next(get_db())
+def add_student_db(db: Session, new_student: Student):
+    """添加单个学生。"""
     db.add(new_student)
     db.commit()
 
 
-def update_student_db(student_id, update_student):  # noqa: D103
-    db = next(get_db())
+def update_student_db(db: Session, student_no: str, update_student: Student):
+    """更新学生的信息。"""
     try:
-        db.query(Student).filter(Student.student_id == student_id).update({
-            'class_id': update_student.class_id,
-            'student_name': update_student.student_name,
-            'hometown': update_student.hometown,
+        db.query(Student).filter(Student.student_no == student_no).update({
+            'class_no': update_student.class_no,
+            'name': update_student.name,
+            'birth_place': update_student.birth_place,
             'graduate_school': update_student.graduate_school,
             'major': update_student.major,
-            'enroll_date': update_student.enroll_date,
-            'graduate_date': update_student.graduate_date,
+            'entrance_time': update_student.entrance_time,
+            'graduate_time': update_student.graduate_time,
             'education': update_student.education,
-            'advisor_id': update_student.advisor_id,
+            'advisor_name': update_student.advisor_name,
             'age': update_student.age,
             'gender': update_student.gender,
+            'phone': update_student.phone,
+            'id_card': update_student.id_card,
         })
         db.commit()
         return True
@@ -87,11 +95,11 @@ def update_student_db(student_id, update_student):  # noqa: D103
         raise HTTPException(status_code=400, detail='更新失败')
 
 
-def delete_student_db(student_id, delete_student=0):  # noqa: D103
-    db = next(get_db())
+def delete_student_db(db: Session, student_no: str, delete_student: int = 1):
+    """软删除学生的信息。"""
     try:
-        db.query(Student).filter(Student.student_id == student_id).update({
-            'status': delete_student
+        db.query(Student).filter(Student.student_no == student_no).update({
+            'isdeleted': delete_student
         })
         db.commit()
         return True
@@ -99,11 +107,11 @@ def delete_student_db(student_id, delete_student=0):  # noqa: D103
         raise HTTPException(status_code=400, detail='删除失败')
 
 
-def delete_back_db(student_id, delete_student=1):  # noqa: D103
-    db = next(get_db())
+def delete_back_db(db: Session, student_no: str, delete_student: int = 0):
+    """恢复软删除学生信息。"""
     try:
-        db.query(Student).filter(Student.student_id == student_id).update({
-            'status': delete_student
+        db.query(Student).filter(Student.student_no == student_no).update({
+            'isdeleted': delete_student
         })
         db.commit()
         return True
@@ -111,13 +119,13 @@ def delete_back_db(student_id, delete_student=1):  # noqa: D103
         raise HTTPException(status_code=400, detail='恢复失败')
 
 
-def get_student_by_class_db(class_id):  # noqa: D103
-    db = next(get_db())
-    data = db.query(Student).filter(Student.class_id == class_id).all()
+def get_student_by_class_db(db: Session, class_no: str):
+    """按班级查询学生。"""
+    data = db.query(Student).filter(Student.class_no == class_no).all()
     return data
 
 
-def search_student_db(name):  # noqa: D103
-    db = next(get_db())
-    data = db.query(Student).filter(Student.student_name.like(f'%{name}%')).all()
+def search_student_db(db: Session, name: str):
+    """根据姓名模糊查询学生。"""
+    data = db.query(Student).filter(Student.name.like(f'%{name}%')).all()
     return data

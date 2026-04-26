@@ -1,7 +1,28 @@
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 from sqlalchemy.orm import declarative_base, sessionmaker
 
 from app.core.config import settings
+
+
+def _get_server_url() -> str:
+    """获取不指定数据库的 MySQL 连接 URL，用于创建数据库。"""
+    return f"mysql+pymysql://{settings.DB_USER}:{settings.DB_PASSWORD}@{settings.DB_HOST}:{settings.DB_PORT}"
+
+
+def _ensure_database_exists() -> None:
+    """如果配置的数据库不存在，则创建它。"""
+    server_engine = create_engine(
+        _get_server_url(),
+        pool_pre_ping=True,
+        isolation_level="AUTOCOMMIT",
+    )
+    with server_engine.connect() as conn:
+        conn.execute(text(f"CREATE DATABASE IF NOT EXISTS {settings.DB_NAME} CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci"))
+    server_engine.dispose()
+
+
+# 确保数据库存在后再创建 engine
+_ensure_database_exists()
 
 engine = create_engine(
     settings.database_url,
@@ -23,7 +44,7 @@ def get_db():
 
 
 def init_db() -> None:
-    """在应用启动时初始化表结构。"""
+    """在应用启动时初始化表结构（表不存在则创建）。"""
     import app.models.classes  # noqa: F401
     import app.models.employment  # noqa: F401
     import app.models.score  # noqa: F401

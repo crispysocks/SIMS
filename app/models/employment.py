@@ -1,19 +1,22 @@
-from sqlalchemy import Column, Date, Integer, Numeric, String
+from datetime import date
+
+from sqlalchemy import Column, Date, DateTime, Enum, ForeignKey, Integer, Numeric, String
 
 from app.core.database import Base
 
 
 class Employment(Base):
-    """?????????"""
-
     __tablename__ = 'employment'
 
-    id = Column(Integer, primary_key=True, autoincrement=True, comment='????ID')
-    student_id = Column(Integer, nullable=False, unique=True, comment='??ID')
-    student_name = Column(String(50), nullable=True, comment='??????')
-    class_id = Column(Integer, nullable=True, comment='??????')
-    open_date = Column(Date, nullable=True, comment='??????')
-    offer_date = Column(Date, nullable=True, comment='offer????')
-    company_name = Column(String(100), nullable=True, comment='??????')
-    salary = Column(Numeric(10, 2), nullable=True, comment='????')
-    status = Column(Integer, nullable=False, default=1, comment='?? 1?? 0??')
+    student_no = Column(String(20), ForeignKey('students.student_no', ondelete='CASCADE'), primary_key=True, comment='学生编号')
+    employment_status = Column(Enum('待业', '在聘', '已离职'), default='待业', comment='就业状态')
+    employment_open_time = Column(DateTime, comment='就业开放时间')
+    offer_time = Column(DateTime, comment='offer下发时间')
+    company_name = Column(String(100), comment='就业公司名称')
+    salary = Column(Numeric(10, 2), comment='就业薪资')
+    position = Column(String(50), comment='工作岗位')
+    work_location = Column(String(100), comment='工作地点')
+    contract_date = Column(Date, comment='签约日期')
+    isdeleted = Column(Integer, default=0, comment='逻辑删除标记 0=正常 1=已删除')
+    created_at = Column(Date, nullable=False, comment='创建时间')
+    updated_at = Column(Date, nullable=False, comment='更新时间')

@@ -1,94 +1,85 @@
-from fastapi import FastAPI,Depends
-import uvicorn
+from fastapi import APIRouter, Depends, UploadFile, File
 from sqlalchemy.orm import Session
-from Myproject.first_project.core import config as teachers_db
-from Myproject.first_project.schemas.teacher_info import TeacherCreate,TeacherUpdate,CourseCreate,CourseUpdate
-from Myproject.first_project.Services import teacher_services
-app = FastAPI(description='老师信息及任课信息的管理')
+from typing import List
 
+from app.database import get_db
+from app.schemas.teacher import TeacherCreate, TeacherUpdate, CourseCreate, CourseUpdate
+from app.schemas.common import APIResponse
+from app.services.teacher_service import TeacherService
+from app.services.course_service import CourseService
+from app.services.avatar_service import AvatarService
 
-def get_db():
-    db = teachers_db.SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
+router = APIRouter(prefix="/api", tags=["老师及课程管理"])
 
-#获取所有老师
-@app.get("/teachers/", tags=["老师管理"])
+# ========== 老师接口 ==========
+@router.get("/teachers/", response_model=APIResponse[list])
 async def get_teachers(db: Session = Depends(get_db)):
-    # 创建TeacherService实例（关键更新）
-    service = teacher_services.TeacherService(db)
-    # 通过services层获取数据（关键更新）
-    teachers = teacher_services.get_all_teachers()
-    return teachers
+    service = TeacherService(db)
+    return service.get_all_teachers()
 
-
-## 4.2 创建老师
-@app.post("/teachers/", tags=["老师管理"])
+@router.post("/teachers/", response_model=APIResponse[dict], status_code=201)
 async def create_teacher(teacher: TeacherCreate, db: Session = Depends(get_db)):
-    # 通过services层处理创建逻辑（关键更新）
-    service = teacher_services.TeacherService(db)
-    return service.create_teacher(teacher.dict())
+    service = TeacherService(db)
+    return service.create_teacher(teacher.model_dump())
 
-
-## 4.3 获取单个老师
-@app.get("/teachers/{teacher_id}", tags=["老师管理"])
+@router.get("/teachers/{teacher_id}", response_model=APIResponse[dict])
 async def get_teacher(teacher_id: int, db: Session = Depends(get_db)):
-    # 通过services层获取数据（关键更新）
-    service = teacher_services.TeacherService(db)
+    service = TeacherService(db)
     return service.get_teacher(teacher_id)
 
-# 4.4 更新老师
-@app.put("/teachers/{teacher_id}", tags=["老师管理"])
+@router.put("/teachers/{teacher_id}", response_model=APIResponse[dict])
 async def update_teacher(teacher_id: int, teacher: TeacherUpdate, db: Session = Depends(get_db)):
-    service = teacher_services.TeacherService(db)
-    return service.update_teacher(teacher_id, teacher.dict(exclude_unset=True))
+    service = TeacherService(db)
+    return service.update_teacher(teacher_id, teacher.model_dump(exclude_unset=True))
 
-## 4.5 删除老师
-@app.delete("/teachers/{teacher_id}", tags=["老师管理"])
+@router.delete("/teachers/{teacher_id}", response_model=APIResponse[None])
 async def delete_teacher(teacher_id: int, db: Session = Depends(get_db)):
-    service = teacher_services.TeacherService(db)
+    service = TeacherService(db)
     return service.delete_teacher(teacher_id)
 
-# 5. 课程模块CRUD
-## 5.1 获取所有课程
-@app.get("/courses/", tags=["课程管理"])
+# ========== 课程接口 ==========
+@router.get("/courses/", response_model=APIResponse[list])
 async def get_courses(db: Session = Depends(get_db)):
-    service = teacher_services.CourseService(db)
-    courses = teacher_services.get_all_courses()
-    return courses
+    service = CourseService(db)
+    return service.get_all_courses()
 
-## 5.2 创建课程
-@app.post("/courses/", tags=["课程管理"])
+@router.post("/courses/", response_model=APIResponse[dict], status_code=201)
 async def create_course(course: CourseCreate, db: Session = Depends(get_db)):
-    service = teacher_services.CourseService(db)
-    return service.create_course(course.dict())
+    service = CourseService(db)
+    return service.create_course(course.model_dump())
 
-## 5.3 获取单个课程
-@app.get("/courses/{course_id}", tags=["课程管理"])
+@router.get("/courses/{course_id}", response_model=APIResponse[dict])
 async def get_course(course_id: int, db: Session = Depends(get_db)):
-    service = teacher_services.CourseService(db)
+    service = CourseService(db)
     return service.get_course(course_id)
 
-## 5.4 更新课程
-@app.put("/courses/{course_id}", tags=["课程管理"])
+@router.put("/courses/{course_id}", response_model=APIResponse[dict])
 async def update_course(course_id: int, course: CourseUpdate, db: Session = Depends(get_db)):
-    service = teacher_services.CourseService(db)
-    return service.update_course(course_id, course.dict(exclude_unset=True))
+    service = CourseService(db)
+    return service.update_course(course_id, course.model_dump(exclude_unset=True))
 
-## 5.5 删除课程
-@app.delete("/courses/{course_id}", tags=["课程管理"])
+@router.delete("/courses/{course_id}", response_model=APIResponse[None])
 async def delete_course(course_id: int, db: Session = Depends(get_db)):
-    service = teacher_services.CourseService(db)
+    service = CourseService(db)
     return service.delete_course(course_id)
 
-## 5.6 获取指定老师的课程
-@app.get("/teachers/{teacher_id}/courses", tags=["课程管理"])
+@router.get("/teachers/{teacher_id}/courses", response_model=APIResponse[list])
 async def get_teacher_courses(teacher_id: int, db: Session = Depends(get_db)):
-    service = teacher_services.CourseService(db)
+    service = CourseService(db)
     return service.get_courses_by_teacher(teacher_id)
 
+# ========== 头像接口 ==========
+@router.post("/teachers/{teacher_id}/avatar", response_model=APIResponse[dict])
+async def upload_avatar(teacher_id: int, file: UploadFile = File(...), db: Session = Depends(get_db)):
+    service = AvatarService(db)
+    return service.upload_avatar(teacher_id, file)
 
-if __name__ == "__main__":
-    uvicorn.run('teacher_api:app', host="127.0.0.1", port=8080)
+@router.get("/teachers/{teacher_id}/avatar", response_model=APIResponse[dict])
+async def get_avatar(teacher_id: int, db: Session = Depends(get_db)):
+    service = AvatarService(db)
+    return service.get_avatar_path(teacher_id)
+
+@router.delete("/teachers/{teacher_id}/avatar", response_model=APIResponse[None])
+async def remove_avatar(teacher_id: int, db: Session = Depends(get_db)):
+    service = AvatarService(db)
+    return service.delete_avatar(teacher_id)
