@@ -1,7 +1,7 @@
 from datetime import date
 from enum import Enum
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class Gender(str, Enum):
@@ -48,6 +48,21 @@ class StudentUpdate(BaseModel):
     id_card: str | None = Field(None, max_length=18)
 
 
-    class Config:
-        from_attributes = True
+class StudentRead(BaseModel):
+    student_no: str
+    class_no: str
+    name: str
+    birth_place: str | None
+    graduate_school: str | None
+    major: str | None
+    entrance_time: date
+    graduate_time: date | None
+    education: str
+    advisor_name: str | None
+    age: int | None
+    gender: str
+    phone: str | None
+    id_card: str | None
+
+    model_config = ConfigDict(from_attributes=True)
 

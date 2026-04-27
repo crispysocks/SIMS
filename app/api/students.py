@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.dependencies import require_role
 from app.schemas.response import ApiResponse
-from app.schemas.student import StudentCreate, StudentUpdate
+from app.schemas.student import StudentCreate, StudentRead, StudentUpdate
 from app.services.student import (
     add_student_db,
     chick_status,
@@ -17,7 +17,6 @@ from app.services.student import (
     get_student_db,
     get_students_db,
     search_student_db,
-    student_response,
     update_student_db,
 )
 from app.models.student import Student
@@ -29,30 +28,30 @@ router = APIRouter(
 
 
 @router.get('/all', summary='获取学生列表')
-async def students(db: Session = Depends(get_db)) -> ApiResponse[list]:
+async def students(db: Session = Depends(get_db)) -> ApiResponse[list[StudentRead]]:
     students = get_students_db(db)
-    return ApiResponse(message='查询成功', data=students)
+    return ApiResponse(message='查询成功', data=[StudentRead.model_validate(s) for s in students])
 
 
 @router.get('/search', summary='模糊查询')
-def search_student(name: str, db: Session = Depends(get_db)) -> ApiResponse[list]:
+def search_student(name: str, db: Session = Depends(get_db)) -> ApiResponse[list[StudentRead]]:
     data = search_student_db(db, name)
-    return ApiResponse(message='查询成功', data=data)
+    return ApiResponse(message='查询成功', data=[StudentRead.model_validate(s) for s in data])
 
 
 @router.get('/class/{class_no}', summary='按班级查询学生')
-def get_student_class(class_no: str, db: Session = Depends(get_db)) -> ApiResponse[list]:
+def get_student_class(class_no: str, db: Session = Depends(get_db)) -> ApiResponse[list[StudentRead]]:
     data = get_student_by_class_db(db, class_no)
-    return ApiResponse(message='查询成功', data=data)
+    return ApiResponse(message='查询成功', data=[StudentRead.model_validate(s) for s in data])
 
 
 @router.post('/add', summary='创建一个新学生', dependencies=[Depends(require_role(['admin']))])
-def add_student(new_student: StudentCreate, db: Session = Depends(get_db)) -> ApiResponse:
+def add_student(new_student: StudentCreate, db: Session = Depends(get_db)) -> ApiResponse[StudentRead]:
     result = chick_student(db, new_student.student_no)
     if result is True:
         raise HTTPException(status_code=400, detail='学生已存在')
     add_student_db(db, Student(**new_student.model_dump()))
-    return ApiResponse(message='添加成功', data=student_response(new_student))
+    return ApiResponse(message='添加成功', data=StudentRead.model_validate(new_student))
 
 
 @router.delete('/batch', summary='软删除', dependencies=[Depends(require_role(['admin']))])
@@ -79,23 +78,21 @@ def back_student(no_list: List[str], db: Session = Depends(get_db)) -> ApiRespon
 
 
 @router.get('/{student_no}', summary='获取单个学生信息')
-async def get_anyony_student(student_no: str, db: Session = Depends(get_db)) -> ApiResponse:
+async def get_anyony_student(student_no: str, db: Session = Depends(get_db)) -> ApiResponse[StudentRead]:
     result = chick_student(db, student_no)
     if result is True:
         result = chick_status(db, student_no)
         if result is True:
             result1 = get_student_db(db, student_no)
-            response = student_response(result1)
-            return ApiResponse(message='查询成功', data=response)
+            return ApiResponse(message='查询成功', data=StudentRead.model_validate(result1))
     raise HTTPException(status_code=400, detail='学生不存在或已被删除')
 
 
 @router.put('/{student_no}', summary='修改某个学生信息', dependencies=[Depends(require_role(['admin']))])
-def update_student(student_no: str, update_student: StudentUpdate, db: Session = Depends(get_db)) -> ApiResponse:
+def update_student(student_no: str, update_student: StudentUpdate, db: Session = Depends(get_db)) -> ApiResponse[StudentRead]:
     result = chick_student(db, student_no)
     if result is True:
         update_student_db(db, student_no, update_student)
         result1 = get_student_db(db, student_no)
-        response = student_response(result1)
-        return ApiResponse(message='修改成功', data=response)
+        return ApiResponse(message='修改成功', data=StudentRead.model_validate(result1))
     raise HTTPException(status_code=400, detail='学生不存在')
