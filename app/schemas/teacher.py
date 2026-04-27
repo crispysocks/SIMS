@@ -38,3 +38,9 @@ class TeacherRead(TeacherBase):
     model_config = ConfigDict(from_attributes=True)
 
     isdeleted: int
+
+
+class TeacherGenderStat(BaseModel):
+    gender: str
+    count: int
+    ratio: float

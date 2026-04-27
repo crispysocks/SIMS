@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 
 from app.core.database import get_db
 from app.dependencies import require_role
-from app.schemas.teacher import TeacherCreate, TeacherRead, TeacherUpdate
+from app.schemas.teacher import TeacherCreate, TeacherRead, TeacherUpdate, TeacherGenderStat
 from app.schemas.response import ApiResponse
 from app.services import teacher as teacher_service
 
@@ -46,7 +46,23 @@ def update_teacher(
     return ApiResponse(message='更新成功', data=result)
 
 
-@router.delete('/{teacher_no}', summary='删除教师', dependencies=[Depends(require_role(['admin']))])
-def delete_teacher(teacher_no: str, db: Session = Depends(get_db)) -> ApiResponse[TeacherRead]:
-    result = teacher_service.delete_teacher(db, teacher_no)
+@router.delete('', summary='批量删除教师', dependencies=[Depends(require_role(['admin']))])
+def delete_teachers(teacher_nos: list[str], db: Session = Depends(get_db)) -> ApiResponse[list[TeacherRead]]:
+    result = teacher_service.delete_teachers(db, teacher_nos)
     return ApiResponse(message='删除成功', data=result)
+
+
+@router.get('/search/by-name-or-gender', summary='按姓名或性别搜索教师')
+def search_teachers(
+    name: str | None = None,
+    gender: str | None = None,
+    db: Session = Depends(get_db),
+) -> ApiResponse[list[TeacherRead]]:
+    data = teacher_service.search_teachers(db, name=name, gender=gender)
+    return ApiResponse(message='查询成功', data=data)
+
+
+@router.get('/stats/gender', summary='按性别统计教师数量及比例')
+def gender_stats(db: Session = Depends(get_db)) -> ApiResponse[list[TeacherGenderStat]]:
+    data = teacher_service.gender_stats(db)
+    return ApiResponse(message='查询成功', data=data)

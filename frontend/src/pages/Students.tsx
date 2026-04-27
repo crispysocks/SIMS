@@ -270,8 +270,8 @@ export default function StudentsPage() {
               <Label>性别</Label>
               <Select value={formData.gender || ''} onChange={(e) => setFormData({ ...formData, gender: e.target.value })}>
                 <option value="">请选择</option>
-                <option value="male">男</option>
-                <option value="female">女</option>
+                <option value="男">男</option>
+                <option value="女">女</option>
               </Select>
             </div>
             <div className="space-y-2">

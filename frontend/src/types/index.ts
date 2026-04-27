@@ -143,3 +143,9 @@ export interface ClassScoreReportItem {
   excellent_count: number
   pass_count: number
 }
+
+export interface TeacherGenderStat {
+  gender: string
+  count: number
+  ratio: number
+}

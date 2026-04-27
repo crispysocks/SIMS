@@ -6,6 +6,8 @@ import DashboardPage from '@/pages/Dashboard'
 import StudentsPage from '@/pages/Students'
 
 import TeachersPage from '@/pages/Teachers'
+import TeacherSearchPage from '@/pages/TeacherSearch'
+import TeacherStatsPage from '@/pages/TeacherStats'
 import ClassesPage from '@/pages/Classes'
 import ScoresPage from '@/pages/Scores'
 import EmploymentPage from '@/pages/Employment'
@@ -34,6 +36,8 @@ export function AppRoutes() {
         <Route path="students" element={<StudentsPage />} />
 
         <Route path="teachers" element={<TeachersPage />} />
+        <Route path="teachers/search" element={<TeacherSearchPage />} />
+        <Route path="teachers/stats" element={<TeacherStatsPage />} />
         <Route path="classes" element={<ClassesPage />} />
         <Route path="scores" element={<ScoresPage />} />
         <Route path="employment" element={<EmploymentPage />} />

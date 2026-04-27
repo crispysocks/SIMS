@@ -6,15 +6,18 @@ import { Input } from '@/components/ui/input'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { useToast } from '@/components/ui/toast'
-import { Plus, Trash2, Pencil } from 'lucide-react'
+import { Plus, Trash2, Pencil, Search, PieChart } from 'lucide-react'
 import type { Teacher } from '@/types'
+import { useNavigate } from 'react-router-dom'
 
 export default function TeachersPage() {
+  const navigate = useNavigate()
   const queryClient = useQueryClient()
   const { addToast } = useToast()
   const [isOpen, setIsOpen] = useState(false)
   const [editing, setEditing] = useState<Teacher | null>(null)
   const [formData, setFormData] = useState<Partial<Teacher>>({})
+  const [selectedTeachers, setSelectedTeachers] = useState<string[]>([])
 
   const { data: teachers, isLoading } = useQuery({
     queryKey: ['teachers', 'all'],
@@ -45,9 +48,10 @@ export default function TeachersPage() {
   })
 
   const deleteMutation = useMutation({
-    mutationFn: (teacherNo: string) => teacherApi.delete(teacherNo),
+    mutationFn: (teacherNos: string[]) => teacherApi.delete(teacherNos),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['teachers'] })
+      setSelectedTeachers([])
       addToast({ title: '成功', description: '教师已删除' })
     },
     onError: (err: Error) => addToast({ title: '错误', description: err.message || '删除失败', variant: 'destructive' }),
@@ -73,6 +77,20 @@ export default function TeachersPage() {
     }
   }
 
+  const toggleSelect = (teacherNo: string) => {
+    setSelectedTeachers((prev) =>
+      prev.includes(teacherNo) ? prev.filter((n) => n !== teacherNo) : [...prev, teacherNo]
+    )
+  }
+
+  const toggleSelectAll = () => {
+    if (selectedTeachers.length === (teachers?.length ?? 0)) {
+      setSelectedTeachers([])
+    } else {
+      setSelectedTeachers(teachers?.map((t) => t.teacher_no) ?? [])
+    }
+  }
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -80,10 +98,29 @@ export default function TeachersPage() {
           <h2 className="text-2xl font-bold tracking-tight">教师管理</h2>
           <p className="text-muted-foreground">管理教师信息</p>
         </div>
-        <Button onClick={openAdd}>
-          <Plus className="h-4 w-4 mr-2" />
-          新增教师
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => navigate('/teachers/search')}>
+            <Search className="h-4 w-4 mr-2" />
+            查询教师
+          </Button>
+          <Button variant="outline" onClick={() => navigate('/teachers/stats')}>
+            <PieChart className="h-4 w-4 mr-2" />
+            性别统计
+          </Button>
+          <Button
+            variant="destructive"
+            size="sm"
+            disabled={selectedTeachers.length === 0}
+            onClick={() => deleteMutation.mutate(selectedTeachers)}
+          >
+            <Trash2 className="h-4 w-4 mr-2" />
+            批量删除 {selectedTeachers.length > 0 && `(${selectedTeachers.length})`}
+          </Button>
+          <Button onClick={openAdd}>
+            <Plus className="h-4 w-4 mr-2" />
+            新增教师
+          </Button>
+        </div>
       </div>
 
       <div className="border rounded-lg overflow-hidden">
@@ -91,6 +128,13 @@ export default function TeachersPage() {
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead className="w-12">
+                  <input
+                    type="checkbox"
+                    checked={teachers?.length === selectedTeachers.length && (teachers?.length ?? 0) > 0}
+                    onChange={toggleSelectAll}
+                  />
+                </TableHead>
                 <TableHead>教师编号</TableHead>
                 <TableHead>姓名</TableHead>
                 <TableHead>性别</TableHead>
@@ -102,24 +146,28 @@ export default function TeachersPage() {
             </TableHeader>
             <TableBody>
               {isLoading ? (
-                <TableRow><TableCell colSpan={7} className="text-center py-8">加载中...</TableCell></TableRow>
+                <TableRow><TableCell colSpan={8} className="text-center py-8">加载中...</TableCell></TableRow>
               ) : teachers?.length === 0 ? (
-                <TableRow><TableCell colSpan={7} className="text-center py-8 text-muted-foreground">暂无数据</TableCell></TableRow>
+                <TableRow><TableCell colSpan={8} className="text-center py-8 text-muted-foreground">暂无数据</TableCell></TableRow>
               ) : (
                 teachers?.map((teacher) => (
                   <TableRow key={teacher.teacher_no}>
+                    <TableCell>
+                      <input
+                        type="checkbox"
+                        checked={selectedTeachers.includes(teacher.teacher_no)}
+                        onChange={() => toggleSelect(teacher.teacher_no)}
+                      />
+                    </TableCell>
                     <TableCell>{teacher.teacher_no}</TableCell>
                     <TableCell className="font-medium">{teacher.name}</TableCell>
-                    <TableCell>{teacher.gender === 'male' ? '男' : teacher.gender === 'female' ? '女' : '其他'}</TableCell>
+                    <TableCell>{teacher.gender}</TableCell>
                     <TableCell>{teacher.phone}</TableCell>
                     <TableCell>{teacher.email}</TableCell>
                     <TableCell>{teacher.subject}</TableCell>
                     <TableCell className="text-right">
                       <Button variant="ghost" size="sm" onClick={() => openEdit(teacher)}>
                         <Pencil className="h-4 w-4" />
-                      </Button>
-                      <Button variant="ghost" size="sm" onClick={() => deleteMutation.mutate(teacher.teacher_no)}>
-                        <Trash2 className="h-4 w-4 text-destructive" />
                       </Button>
                     </TableCell>
                   </TableRow>
@@ -151,8 +199,8 @@ export default function TeachersPage() {
                 <label className="text-sm font-medium">性别</label>
                 <select className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm" value={formData.gender || ''} onChange={(e) => setFormData({ ...formData, gender: e.target.value })}>
                   <option value="">请选择</option>
-                  <option value="male">男</option>
-                  <option value="female">女</option>
+                  <option value="男">男</option>
+                  <option value="女">女</option>
                 </select>
               </div>
               <div className="space-y-2">
