@@ -32,5 +32,5 @@ FastAPI Student Management System (SIMS). Python 3.12 + SQLAlchemy + MySQL.
 
 ## Quirks
 
-- Upload path `./backend/uploads` hardcoded in some services — directory doesn't exist by default, create it if needed.
+- Upload path `./uploads` hardcoded in some services — directory doesn't exist by default, create it if needed.
 - Excel import expects columns matching `Student` model fields (`student_no`, `name`, `gender`, `grade`, etc.).

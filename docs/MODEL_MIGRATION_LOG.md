@@ -99,7 +99,7 @@
 - 去除 `student_name`, `class_id` 冗余字段
 - `open_date: date` → `employment_open_time: datetime`
 - `offer_date: date` → `offer_time: datetime`
-- 增加 `employment_status`, `position`, `work_location`, `contract_date`
+- 增加 `employment_status`, `position`, `work_location`
 - `status: int` → `isdeleted: int`
 - 增加 `created_at`, `updated_at`
 

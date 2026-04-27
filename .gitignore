@@ -37,6 +37,7 @@ REPORT.md
 # Frontend
 frontend/node_modules/
 frontend/dist/
+frontend/.vite/
 frontend/*.log
 frontend/.env.local
 frontend/.env.*.local

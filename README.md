@@ -1,6 +1,6 @@
 # SIMS — 学生信息管理系统
 
-基于 **FastAPI** + **SQLAlchemy** + **MySQL** + **Vue 3** 构建的全栈学生信息管理系统，提供学生基本信息、考核成绩、就业信息、班级与教师管理以及多维统计分析能力。
+基于 **FastAPI** + **SQLAlchemy** + **MySQL** + **React** 构建的学生信息管理系统，提供学生基本信息、考核成绩、就业信息、班级与教师管理以及多维统计分析能力。
 
 ---
 
@@ -21,13 +21,10 @@
 
 | 层级 | 技术 |
 |------|------|
-| 框架 | Vue 3 + TypeScript |
-| 构建工具 | Vite 6 |
-| UI 组件库 | Element Plus |
-| 状态管理 | Pinia |
-| 路由 | Vue Router 4 |
-| HTTP | Axios |
-| 图表 | ECharts |
+| 框架 | React + TypeScript |
+| 构建工具 | Vite |
+| 路由 | React Router |
+| HTTP | Fetch API |
 
 ---
 
@@ -44,17 +41,9 @@ SIMS/
 │   ├── dependencies.py      # 认证与权限依赖
 │   └── main.py              # FastAPI 应用入口
 │
-├── frontend/                # 前端 Vue 3 应用
-│   ├── src/
-│   │   ├── api/            # API 接口封装
-│   │   ├── components/     # 公共组件
-│   │   ├── composables/    # 组合式函数
-│   │   ├── router/         # 路由配置
-│   │   ├── stores/         # Pinia 状态管理
-│   │   ├── types/          # TypeScript 类型定义
-│   │   ├── utils/          # 工具函数
-│   │   └── views/          # 页面视图
-│   ├── public/             # 静态资源
+├── frontend/                # 前端 React 应用
+│   ├── src/                 # 源代码目录
+│   ├── public/              # 静态资源
 │   └── package.json
 │
 ├── docs/                    # 需求文档

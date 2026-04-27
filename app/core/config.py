@@ -16,7 +16,7 @@ class Settings(BaseSettings):
 
     CORS_ORIGINS: str = '["http://localhost:5173"]'
 
-    UPLOAD_DIR: str = "./backend/uploads"
+    UPLOAD_DIR: str = "./uploads"
     MAX_FILE_SIZE: int = 5242880
 
     model_config = SettingsConfigDict(env_file=".env", case_sensitive=True)

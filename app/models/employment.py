@@ -16,5 +16,4 @@ class Employment(Base):
     salary = Column(Numeric(10, 2), comment='就业薪资')
     position = Column(String(50), comment='工作岗位')
     work_location = Column(String(100), comment='工作地点')
-    contract_date = Column(Date, comment='签约日期')
     isdeleted = Column(Integer, default=0, comment='逻辑删除标记 0=正常 1=已删除')

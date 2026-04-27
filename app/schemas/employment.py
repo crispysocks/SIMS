@@ -14,7 +14,6 @@ class EmploymentCreate(BaseModel):
     salary: Decimal | None = Field(default=None, ge=0, description='薪资')
     position: str | None = Field(default=None, max_length=50, description='工作岗位')
     work_location: str | None = Field(default=None, max_length=100, description='工作地点')
-    contract_date: date | None = Field(default=None, description='签约日期')
 
 
 class EmploymentUpdate(BaseModel):
@@ -27,7 +26,6 @@ class EmploymentUpdate(BaseModel):
     salary: Decimal | None = Field(default=None, ge=0, description='薪资')
     position: str | None = Field(default=None, max_length=50, description='工作岗位')
     work_location: str | None = Field(default=None, max_length=100, description='工作地点')
-    contract_date: date | None = Field(default=None, description='签约日期')
 
 
 class EmploymentRead(BaseModel):
@@ -41,7 +39,6 @@ class EmploymentRead(BaseModel):
     salary: Decimal | None
     position: str | None
     work_location: str | None
-    contract_date: date | None
     isdeleted: int
 
     model_config = ConfigDict(from_attributes=True)

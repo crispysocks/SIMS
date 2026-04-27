@@ -12,6 +12,7 @@ from app.schemas.employment_v2 import (
     EmploymentSearchResponse,
 )
 
+
 def _check_student(db: Session, student_no: str) -> bool:
     """检查学生是否存在且未被删除。"""
     student = (
@@ -41,22 +42,26 @@ def add_stu_test(db: Session, emp_model: EmploymentCreate):
             return None
 
         existing.isdeleted = 0
-        existing.employment_open_time = emp_model.open_time
+        existing.employment_open_time = emp_model.employment_open_time
         existing.offer_time = emp_model.offer_time
-        existing.company_name = emp_model.company
+        existing.company_name = emp_model.company_name
         existing.salary = emp_model.salary
-        existing.employment_status = '在聘'
+        existing.position = emp_model.position
+        existing.work_location = emp_model.work_location
+        existing.employment_status = emp_model.employment_status or '在聘'
         db.commit()
         db.refresh(existing)
         return existing
 
     emp = Employment(
         student_no=emp_model.student_no,
-        employment_open_time=emp_model.open_time,
+        employment_open_time=emp_model.employment_open_time,
         offer_time=emp_model.offer_time,
-        company_name=emp_model.company,
+        company_name=emp_model.company_name,
         salary=emp_model.salary,
-        employment_status='在聘',
+        position=emp_model.position,
+        work_location=emp_model.work_location,
+        employment_status=emp_model.employment_status or '在聘',
         isdeleted=0,
     )
     db.add(emp)
@@ -75,14 +80,9 @@ def update_stu_test(db: Session, student_no: str, emp_model: EmploymentUpdate):
     if not emp:
         return None
 
-    if emp_model.salary is not None:
-        emp.salary = emp_model.salary
-    if emp_model.company is not None:
-        emp.company_name = emp_model.company
-    if emp_model.offer_time is not None:
-        emp.offer_time = emp_model.offer_time
-    if emp_model.open_time is not None:
-        emp.employment_open_time = emp_model.open_time
+    update_data = emp_model.model_dump(exclude_unset=True)
+    for key, value in update_data.items():
+        setattr(emp, key, value)
     db.commit()
     db.refresh(emp)
     return emp
@@ -107,10 +107,13 @@ def find_emp(db: Session, student_no: str):
 
     data = {
         'student_no': re.student_no,
-        'open_date': re.employment_open_time,
-        'offer_date': re.offer_time,
-        'company': re.company_name,
+        'employment_open_time': re.employment_open_time,
+        'offer_time': re.offer_time,
+        'company_name': re.company_name,
         'salary': re.salary,
+        'position': re.position,
+        'work_location': re.work_location,
+        'employment_status': re.employment_status,
     }
     return data
 
@@ -136,10 +139,13 @@ def find_list_emp(db: Session, class_no: str):
         {
             'student_no': emp.student_no,
             'student_name': stu.name,
-            'open_date': emp.employment_open_time,
-            'offer_date': emp.offer_time,
-            'company': emp.company_name,
+            'employment_open_time': emp.employment_open_time,
+            'offer_time': emp.offer_time,
+            'company_name': emp.company_name,
             'salary': emp.salary,
+            'position': emp.position,
+            'work_location': emp.work_location,
+            'employment_status': emp.employment_status,
         }
         for emp, stu in re
     ]
@@ -198,14 +204,23 @@ def search_emp_list(db: Session, query: EmploymentQuery):
     if query.student_no is not None:
         re = re.filter(Employment.student_no == query.student_no)
 
-    if query.company is not None:
-        re = re.filter(Employment.company_name == query.company)
+    if query.company_name is not None:
+        re = re.filter(Employment.company_name == query.company_name)
 
     if query.min_salary is not None:
         re = re.filter(Employment.salary >= query.min_salary)
 
     if query.max_salary is not None:
         re = re.filter(Employment.salary <= query.max_salary)
+
+    if query.employment_status is not None:
+        re = re.filter(Employment.employment_status == query.employment_status)
+
+    if query.position is not None:
+        re = re.filter(Employment.position == query.position)
+
+    if query.work_location is not None:
+        re = re.filter(Employment.work_location == query.work_location)
 
     results = re.filter(Employment.isdeleted == 0).all()
 
@@ -214,10 +229,13 @@ def search_emp_list(db: Session, query: EmploymentQuery):
             student_no=emp.student_no,
             student_name=student_name,
             class_no=class_no,
-            company=emp.company_name or '',
-            salary=float(emp.salary) if emp.salary is not None else 0.0,
-            open_time=emp.employment_open_time,
+            company_name=emp.company_name or '',
+            salary=emp.salary,
+            employment_open_time=emp.employment_open_time,
             offer_time=emp.offer_time,
+            position=emp.position,
+            work_location=emp.work_location,
+            employment_status=emp.employment_status or '待业',
         )
         for emp, student_name, class_no in results
     ]
