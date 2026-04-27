@@ -17,7 +17,7 @@ import { employmentApi } from '@/api/employment'
 const stats = [
   { label: '学生总数', icon: Users, color: 'text-blue-500', bg: 'bg-blue-500/10', api: studentApi.getAll },
   { label: '教师总数', icon: GraduationCap, color: 'text-green-500', bg: 'bg-green-500/10', api: teacherApi.getAll },
-  { label: '班级总数', icon: School, color: 'text-purple-500', bg: 'bg-purple-500/10', api: classApi.getAll },
+  { label: '班级总数', icon: School, color: 'text-purple-500', bg: 'bg-purple-500/10', api: classApi.getTotalCount },
   { label: '就业人数', icon: Briefcase, color: 'text-orange-500', bg: 'bg-orange-500/10', api: () => employmentApi.getByStatus(1) },
 ]
 
@@ -33,10 +33,10 @@ export default function DashboardPage() {
 
   const { data: students } = useQuery({ queryKey: ['students', 'all'], queryFn: () => studentApi.getAll().then((r) => r.data) })
   const { data: teachers } = useQuery({ queryKey: ['teachers', 'all'], queryFn: () => teacherApi.getAll().then((r) => r.data) })
-  const { data: classes } = useQuery({ queryKey: ['classes', 'all'], queryFn: () => classApi.getAll().then((r) => r.data) })
+  const { data: classCountRes } = useQuery({ queryKey: ['classes', 'count'], queryFn: () => classApi.getTotalCount().then((r) => r.data) })
   const { data: employments } = useQuery({ queryKey: ['employment', 'status', 1], queryFn: () => employmentApi.getByStatus(1).then((r) => r.data) })
 
-  const counts = [students?.length, teachers?.length, classes?.length, employments?.length]
+  const counts = [students?.length, teachers?.length, classCountRes?.total, employments?.length]
 
   return (
     <div className="space-y-6">

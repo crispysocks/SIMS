@@ -29,10 +29,12 @@ export default function EmploymentPage() {
     queryFn: () => studentApi.getAll().then((r) => r.data),
   })
 
-  const { data: classes } = useQuery({
-    queryKey: ['classes', 'all'],
-    queryFn: () => classApi.getAll().then((r) => r.data),
+  const { data: classListData } = useQuery({
+    queryKey: ['classes', 'list', 0, 100, ''],
+    queryFn: () => classApi.getList(0, 100).then((r) => r.data),
   })
+
+  const classes = classListData?.classes
 
   const { data: employments, isLoading } = useQuery({
     queryKey: ['employment', filterType, filterValue],

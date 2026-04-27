@@ -25,7 +25,7 @@ def chick_student(db: Session, new_student_no: str):
 
 
 def get_students_db(db: Session):
-    """获取所有学生信息，包括状态。"""
+    """获取所有学生信息。。"""
     list1 = []
     result = db.query(Student).all()
     for student in result:
@@ -40,7 +40,7 @@ def get_student_db(db: Session, student_no: str):
     result = db.query(Student).filter(Student.student_no == student_no).first()
     return result
 
-
+# 已被组长弃用
 def student_response(new_student):
     """公共响应体函数，返回学生信息（没有状态的信息）。"""
     if new_student is None:

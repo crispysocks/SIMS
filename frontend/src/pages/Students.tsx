@@ -55,10 +55,12 @@ export default function StudentsPage() {
     enabled: selectedClass.length > 0,
   })
 
-  const { data: classes } = useQuery({
-    queryKey: ['classes', 'all'],
-    queryFn: () => classApi.getAll().then((r) => r.data),
+  const { data: classListData } = useQuery({
+    queryKey: ['classes', 'list', 0, 100, ''],
+    queryFn: () => classApi.getList(0, 100).then((r) => r.data),
   })
+
+  const classes = classListData?.classes
 
   const deleteMutation = useMutation({
     mutationFn: (noList: string[]) => studentApi.batchDelete(noList),

@@ -5,24 +5,20 @@ from app.models.classes import ClassInfo
 from app.schemas.classes import ClassCreate, ClassUpdate
 
 
-def get_class_by_no(db: Session, class_no: str) -> ClassInfo:
-    class_info = (
-        db.query(ClassInfo)
-        .filter(ClassInfo.class_no == class_no, ClassInfo.isdeleted == 0)
-        .first()
-    )
-    if not class_info:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail='班级不存在',
-        )
-    return class_info
+# 1.分页 + 模糊查询  获取班级列表
+def get_class_list(db: Session, skip: int, limit: int, class_name: str | None = None):
+    query = db.query(ClassInfo).filter(ClassInfo.isdeleted == 0)
+
+    if class_name:
+        query = query.filter(ClassInfo.class_name.contains(class_name))
+
+    total = query.count()
+    classes = query.offset(skip).limit(limit).all()
+
+    return classes, total
 
 
-def list_classes(db: Session) -> list[ClassInfo]:
-    return db.query(ClassInfo).filter(ClassInfo.isdeleted == 0).all()
-
-
+# 2.新增班级
 def create_class(db: Session, data: ClassCreate) -> ClassInfo:
     existing = (
         db.query(ClassInfo)
@@ -54,20 +50,55 @@ def create_class(db: Session, data: ClassCreate) -> ClassInfo:
     return class_info
 
 
+# 3.修改班级
 def update_class(db: Session, class_no: str, data: ClassUpdate) -> ClassInfo:
-    class_info = get_class_by_no(db, class_no)
+    cls = db.query(ClassInfo).filter(
+        ClassInfo.class_no == class_no,
+        ClassInfo.isdeleted == 0
+    ).first()
+
+    if not cls:
+        raise HTTPException(status_code=404, detail='班级不存在')
+
     update_data = data.model_dump(exclude_unset=True)
 
-    for field, value in update_data.items():
-        setattr(class_info, field, value)
+    for key, value in update_data.items():
+        setattr(cls, key, value)
+
     db.commit()
-    db.refresh(class_info)
-    return class_info
+    db.refresh(cls)
+
+    return cls
 
 
-def delete_class(db: Session, class_no: str) -> ClassInfo:
-    class_info = get_class_by_no(db, class_no)
-    class_info.isdeleted = 1
+# 4.删除班级（逻辑删除）
+def delete_class(db: Session, class_no: str):
+    cls = db.query(ClassInfo).filter(
+        ClassInfo.class_no == class_no,
+        ClassInfo.isdeleted == 0
+    ).first()
+
+    if not cls:
+        raise HTTPException(status_code=404, detail='班级不存在')
+
+    cls.isdeleted = 1
     db.commit()
-    db.refresh(class_info)
-    return class_info
+
+
+# 5.获取所有班级名称
+def get_class_names(db: Session):
+    classes = db.query(ClassInfo).filter(ClassInfo.isdeleted == 0).all()
+    return [cls.class_name for cls in classes]
+
+
+# 6.统计一共有多少班级
+def get_class_total_count(db: Session):
+    return db.query(ClassInfo).filter(ClassInfo.isdeleted == 0).count()
+
+
+# 7.根据编号查单个班级
+def get_class_by_id(db: Session, class_no: str):
+    return db.query(ClassInfo).filter(
+        ClassInfo.class_no == class_no,
+        ClassInfo.isdeleted == 0
+    ).first()

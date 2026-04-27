@@ -60,15 +60,15 @@ class EmploymentQuery(BaseModel):
 class EmploymentSearchResponse(BaseModel):
     """v2 就业信息搜索响应模型"""
 
-    student_no: str
-    student_name: str
-    class_no: str
-    company_name: str
-    salary: Decimal
+    student_no: Optional[str] = None
+    student_name: Optional[str] = None
+    class_no: Optional[str] = None
+    company_name: Optional[str] = None
+    salary: Optional[Decimal] = None
     employment_open_time: Optional[datetime] = None
     offer_time: Optional[datetime] = None
     position: Optional[str] = None
     work_location: Optional[str] = None
-    employment_status: str
+    employment_status: Optional[str] = None
 
     model_config = ConfigDict(from_attributes=True)

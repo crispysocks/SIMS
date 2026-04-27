@@ -64,12 +64,13 @@ def delete_student(no_list: List[str], db: Session = Depends(get_db)) -> ApiResp
     return ApiResponse(message='删除成功', data=None)
 
 
-@router.delete('/back', summary='恢复软删除的学生', dependencies=[Depends(require_role(['admin']))])
+@router.put('/back', summary='恢复软删除的学生', dependencies=[Depends(require_role(['admin']))])
 def back_student(no_list: List[str], db: Session = Depends(get_db)) -> ApiResponse[None]:
     for student_no in no_list:
         result = chick_student(db, student_no)
-        if result is False:
-            raise HTTPException(status_code=400, detail='部分学生编号不存在,请重新输入')
+        result1 = chick_status(db, student_no)
+        if result is False or result1 is True:
+            raise HTTPException(status_code=400, detail='部分学生不存在或者未被删除,请重新输入')
 
     for student_no in no_list:
         delete_back_db(db, student_no)
@@ -95,3 +96,8 @@ def update_student(student_no: str, update_student: StudentUpdate, db: Session =
         result1 = get_student_db(db, student_no)
         return ApiResponse(message='修改成功', data=StudentRead.model_validate(result1))
     raise HTTPException(status_code=400, detail='学生不存在')
+
+
+
+
+
