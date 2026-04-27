@@ -12,6 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { useToast } from '@/components/ui/toast'
 import { Search, Plus, Trash2, RotateCcw, Eye } from 'lucide-react'
+import { Label } from '@/components/ui/label'
 import type { Student } from '@/types'
 
 export default function StudentsPage() {

@@ -9,16 +9,6 @@ from app.services import score as score_service
 router = APIRouter(prefix='/scores', tags=['成绩管理'])
 
 
-@router.get('/{student_no}', response_model=list[ScoreRead])
-def get_scores(
-    student_no: str,
-    current_user: CurrentUser = Depends(get_current_user),
-    db: Session = Depends(get_db),
-):
-    """查询指定学生的成绩列表。"""
-    return score_service.list_scores_by_student(db, student_no)
-
-
 @router.post('/', response_model=ScoreRead, status_code=status.HTTP_201_CREATED)
 def create_score(
     data: ScoreCreate,
@@ -48,3 +38,13 @@ def delete_score(
     """逻辑删除指定学生某次成绩。"""
     score_service.delete_score(db, data.student_no, data.exam_no, data.exam_name)
     return None
+
+
+@router.get('/{student_no}', response_model=list[ScoreRead])
+def get_scores(
+    student_no: str,
+    current_user: CurrentUser = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """查询指定学生的成绩列表。"""
+    return score_service.list_scores_by_student(db, student_no)
