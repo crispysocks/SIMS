@@ -104,7 +104,6 @@ def _load_sample_data() -> None:
             existing = db.query(Score).filter(
                 Score.student_no == item["student_no"],
                 Score.exam_no == item["exam_no"],
-                Score.exam_name == item["exam_name"],
             ).first()
             if not existing:
                 db.add(Score(**item))

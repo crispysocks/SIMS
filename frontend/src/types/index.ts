@@ -1,18 +1,21 @@
 export interface Student {
   student_no: string
   name: string
-  class_no: string
   gender: string
-  age?: number | null
-  birth_place?: string | null
-  graduate_school?: string | null
-  major?: string | null
+  grade: string
+  phone: string
+  email: string
+  id_card: string
   entrance_time: string
-  graduate_time?: string | null
+  graduate_time: string
+  class_no: string
+  isdeleted: number
+  age: number
+  birth_place: string
+  graduate_school: string
+  major: string
   education: string
-  advisor_name?: string | null
-  phone?: string | null
-  id_card?: string | null
+  advisor_name: string
 }
 
 export interface Teacher {
@@ -25,6 +28,7 @@ export interface Teacher {
   birthday: string
   hire_date: string
   subject: string
+  isdeleted: number
 }
 
 export interface ClassInfo {
@@ -39,7 +43,6 @@ export interface ClassInfo {
 export interface Score {
   student_no: string
   exam_no: string
-  exam_name: string
   score: number
   exam_date: string
 }
@@ -67,18 +70,59 @@ export interface EmploymentV2 {
   is_deleted: boolean
 }
 
-export interface AvgSalaryByGroup {
-  group_key: string
-  avg_salary: number
-  count: number
+export interface User {
+  username: string
+  roles: string[]
 }
 
-export interface ClassGenderStat {
-  class_no: string
+export interface ClassGenderStats {
   class_name: string
   male_count: number
   female_count: number
-  total: number
+}
+
+export interface ClassGenderStat {
+  class_name: string
+  male_count: number
+  female_count: number
+}
+
+export interface TeacherGenderStat {
+  gender: string
+  count: number
+  ratio: number
+}
+
+export interface TopSalaryStudent {
+  student_no: string
+  name: string
+  class_no: string
+  company: string
+  salary: number
+  position: string
+}
+
+export interface AvgSalaryByGroup {
+  group_key: string
+  avg_salary: number
+}
+
+export interface AgeFilterResult {
+  student_no: string
+  name: string
+  age: number
+}
+
+export interface AlwaysAboveResult {
+  student_no: string
+  name: string
+  min_score: number
+}
+
+export interface FailedTwiceResult {
+  student_no: string
+  name: string
+  failed_count: number
 }
 
 export interface ClassAvgScore {
@@ -87,12 +131,11 @@ export interface ClassAvgScore {
   avg_score: number
 }
 
-export interface TopSalaryStudent {
+export interface TopSalaryResult {
   student_no: string
   name: string
-  class_no: string
-  salary: number
   company: string
+  salary: number
   position: string
 }
 
@@ -117,35 +160,14 @@ export interface ExamRankingItem {
   rank: number
 }
 
-export interface ProgressItem {
-  student_no: string
-  student_name: string
-  class_no: string
-  class_name: string
-  previous_exam_no: number
-  previous_exam_name: string
-  previous_score: number
-  latest_exam_no: number
-  latest_exam_name: string
-  latest_score: number
-  score_diff: number
-}
-
 export interface ClassScoreReportItem {
   class_no: string
   class_name: string
   exam_no: number
-  exam_name: string
   student_count: number
   avg_score: number
   excellent_rate: number
   pass_rate: number
   excellent_count: number
   pass_count: number
-}
-
-export interface TeacherGenderStat {
-  gender: string
-  count: number
-  ratio: number
 }

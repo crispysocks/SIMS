@@ -7,7 +7,6 @@ from app.schemas.response import ApiResponse
 from app.schemas.score import (
     ClassScoreReportItem,
     ExamRankingItem,
-    ProgressItem,
     ScoreCreate,
     ScoreDelete,
     ScoreRead,
@@ -47,8 +46,17 @@ def delete_score(
     db: Session = Depends(get_db),
 ) -> ApiResponse[None]:
     """逻辑删除指定学生某次成绩。"""
-    score_service.delete_score(db, data.student_no, data.exam_no, data.exam_name)
+    score_service.delete_score(db, data.student_no, data.exam_no)
     return ApiResponse(message='删除成功', data=None)
+
+
+@router.get('/')
+def list_scores(
+    db: Session = Depends(get_db),
+) -> ApiResponse[list[ScoreRead]]:
+    """查询所有学生成绩记录。"""
+    data = score_service.list_all_scores(db)
+    return ApiResponse(message='查询成功', data=data)
 
 
 @router.get('/{student_no}')
@@ -64,30 +72,18 @@ def get_scores(
 @router.get('/ranking/exam')
 def exam_ranking(
     exam_no: int = Query(..., ge=1, description='考核序次'),
-    exam_name: str = Query(..., description='考试名称'),
     db: Session = Depends(get_db),
 ) -> ApiResponse[list[ExamRankingItem]]:
     """每次考试的学生成绩排名。"""
-    data = score_service.get_exam_ranking(db, exam_no, exam_name)
-    return ApiResponse(message='查询成功', data=data)
-
-
-@router.get('/ranking/progress')
-def progress_ranking(
-    limit: int = Query(20, ge=1, le=100, description='返回条数'),
-    db: Session = Depends(get_db),
-) -> ApiResponse[list[ProgressItem]]:
-    """学生成绩进步榜（前后两次考试分差）。"""
-    data = score_service.get_progress_ranking(db, limit)
+    data = score_service.get_exam_ranking(db, exam_no)
     return ApiResponse(message='查询成功', data=data)
 
 
 @router.get('/report/class')
 def class_score_report(
     exam_no: int = Query(..., ge=1, description='考核序次'),
-    exam_name: str = Query(..., description='考试名称'),
     db: Session = Depends(get_db),
 ) -> ApiResponse[list[ClassScoreReportItem]]:
     """班级成绩报表（平均分、优秀率、及格率）。"""
-    data = score_service.get_class_score_report(db, exam_no, exam_name)
+    data = score_service.get_class_score_report(db, exam_no)
     return ApiResponse(message='查询成功', data=data)

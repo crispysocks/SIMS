@@ -10,11 +10,10 @@ class Score(Base):
 
     student_no = Column(String(20), ForeignKey('students.student_no', ondelete='CASCADE'), nullable=False, comment='学生编号')
     exam_no = Column(Integer, nullable=False, comment='考核序次')
-    exam_name = Column(String(50), nullable=False, comment='考试名称')
     score = Column(Integer, nullable=False, comment='成绩')
     exam_date = Column(Date, comment='考核日期')
     isdeleted = Column(Integer, default=0, comment='逻辑删除标记 0=正常 1=已删除')
 
     __table_args__ = (
-        PrimaryKeyConstraint('student_no', 'exam_no', 'exam_name'),
+        PrimaryKeyConstraint('student_no', 'exam_no'),
     )
