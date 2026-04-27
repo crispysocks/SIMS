@@ -105,21 +105,40 @@ def add_student_db(db: Session, new_student: Student):
 def update_student_db(db: Session, student_no: str, update_student: Student):
     """更新学生的信息。"""
     try:
-        db.query(Student).filter(Student.student_no == student_no).update({
-            'class_no': update_student.class_no,
-            'name': update_student.name,
-            'birth_place': update_student.birth_place,
-            'graduate_school': update_student.graduate_school,
-            'major': update_student.major,
-            'entrance_time': update_student.entrance_time,
-            'graduate_time': update_student.graduate_time,
-            'education': update_student.education,
-            'advisor_name': update_student.advisor_name,
-            'age': update_student.age,
-            'gender': update_student.gender,
-            'phone': update_student.phone,
-            'id_card': update_student.id_card,
-        })
+        # 如果是空的，就不更新
+        update_data = {}
+        if update_student.class_no is not None:
+            update_data["class_no"] = update_student.class_no
+        if update_student.name is not None:
+            update_data["name"] = update_student.name
+        if update_student.birth_place is not None:
+            update_data["birth_place"] = update_student.birth_place
+        if update_student.graduate_school is not None:
+            update_data["graduate_school"] = update_student.graduate_school
+        if update_student.major is not None:
+            update_data["major"] = update_student.major
+        if update_student.entrance_time is not None:
+            update_data["entrance_time"] = update_student.entrance_time
+        if update_student.graduate_time is not None:
+            update_data["graduate_time"] = update_student.graduate_time
+        if update_student.education is not None:
+            update_data["education"] = update_student.education
+        if update_student.advisor_name is not None:
+            update_data["advisor_name"] = update_student.advisor_name
+        if update_student.age is not None:
+            update_data["age"] = update_student.age
+        if update_student.gender is not None:
+            update_data["gender"] = update_student.gender
+        if update_student.phone is not None:
+            update_data["phone"] = update_student.phone
+        if update_student.id_card is not None:
+            update_data["id_card"] = update_student.id_card
+
+        #  如果是个空字典，直接返回
+        if not update_data:
+            return True
+
+        db.query(Student).filter(Student.student_no == student_no).update(update_data)
         db.commit()
         return True
     except Exception:

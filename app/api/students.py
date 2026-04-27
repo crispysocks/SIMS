@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
-from app.schemas.student import StudentCreate, StudentRead, StudentUpdate
+from app.schemas.student import StudentCreate, StudentUpdate
 from app.services.student import (
     add_student_db,
     chick_status,
@@ -47,7 +47,7 @@ async def get_anyony_student(student_no: str, db: Session = Depends(get_db)):
     raise HTTPException(status_code=400, detail='学生不存在或已被删除')
 
 
-@router.post('/add', response_model=StudentRead, summary='创建一个新学生')
+@router.post('/add', summary='创建一个新学生')
 def add_student(new_student: StudentCreate, db: Session = Depends(get_db)):
     result = chick_student(db, new_student.student_no)
     if result is True:

@@ -24,7 +24,7 @@ class StudentCreate(BaseModel):
     major: str | None = Field(None, max_length=50, description='专业')
     entrance_time: date = Field(..., description='入学时间')
     graduate_time: date | None = Field(None, description='毕业时间')
-    education: str | None = Field(None, max_length=20, description='学历')
+    education: Education = Field(..., max_length=20, description='学历')
     advisor_name: str | None = Field(None, max_length=50, description='顾问姓名')
     age: int | None = Field(None, gt=0, lt=100, description='年龄 1-99')
     gender: Gender = Field(..., description='性别：男/女')
@@ -48,26 +48,6 @@ class StudentUpdate(BaseModel):
     id_card: str | None = Field(None, max_length=18)
 
 
-class StudentRead(BaseModel):
-    student_no: str
-    class_no: str
-    name: str
-    birth_place: str | None
-    graduate_school: str | None
-    major: str | None
-    entrance_time: date
-    graduate_time: date | None
-    education: str | None
-    advisor_name: str | None
-    age: int | None
-    gender: str
-    phone: str | None
-    id_card: str | None
-
     class Config:
         from_attributes = True
 
-
-class StudentListResponse(BaseModel):
-    total: int
-    items: list[StudentRead]

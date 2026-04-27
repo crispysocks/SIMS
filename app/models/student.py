@@ -1,4 +1,3 @@
-from datetime import date
 
 from sqlalchemy import Column, Date, Enum, ForeignKey, Integer, String
 
@@ -16,7 +15,7 @@ class Student(Base):
     major = Column(String(50), comment='专业')
     entrance_time = Column(Date, nullable=False, comment='入学时间')
     graduate_time = Column(Date, comment='毕业时间')
-    education = Column(String(20), comment='学历')
+    education = Column(Enum('专科','本科','硕士'), comment='学历')
     advisor_name = Column(String(50), comment='顾问姓名')
     age = Column(Integer, comment='年龄')
     gender = Column(Enum('男', '女'), nullable=False, comment='性别')
