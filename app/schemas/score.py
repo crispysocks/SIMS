@@ -42,3 +42,45 @@ class ScoreRead(BaseModel):
     isdeleted: int
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class ExamRankingItem(BaseModel):
+    """单次考试学生排名项。"""
+
+    student_no: str
+    student_name: str
+    class_no: str
+    class_name: str
+    score: int
+    rank: int
+
+
+class ProgressItem(BaseModel):
+    """学生成绩进步榜项。"""
+
+    student_no: str
+    student_name: str
+    class_no: str
+    class_name: str
+    previous_exam_no: int
+    previous_exam_name: str
+    previous_score: int
+    latest_exam_no: int
+    latest_exam_name: str
+    latest_score: int
+    score_diff: int
+
+
+class ClassScoreReportItem(BaseModel):
+    """班级成绩报表项。"""
+
+    class_no: str
+    class_name: str
+    exam_no: int
+    exam_name: str
+    student_count: int
+    avg_score: float
+    excellent_rate: float
+    pass_rate: float
+    excellent_count: int
+    pass_count: int

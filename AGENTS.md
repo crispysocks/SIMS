@@ -13,7 +13,7 @@ FastAPI Student Management System (SIMS). Python 3.12 + SQLAlchemy + MySQL + Rea
 
 ### 前端
 - **Dev server**: `cd frontend && npm run dev`
-- **Build**: `cd frontend && npm run build`
+- **Build**: `cd frontend && npm run build` (includes `tsc -b` typecheck)
 - **Lint**: `cd frontend && npm run lint`
 
 ## Database

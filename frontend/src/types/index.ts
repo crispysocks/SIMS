@@ -107,3 +107,39 @@ export interface ClassOfferDuration {
   class_name: string
   avg_offer_duration_days: number
 }
+
+export interface ExamRankingItem {
+  student_no: string
+  student_name: string
+  class_no: string
+  class_name: string
+  score: number
+  rank: number
+}
+
+export interface ProgressItem {
+  student_no: string
+  student_name: string
+  class_no: string
+  class_name: string
+  previous_exam_no: number
+  previous_exam_name: string
+  previous_score: number
+  latest_exam_no: number
+  latest_exam_name: string
+  latest_score: number
+  score_diff: number
+}
+
+export interface ClassScoreReportItem {
+  class_no: string
+  class_name: string
+  exam_no: number
+  exam_name: string
+  student_count: number
+  avg_score: number
+  excellent_rate: number
+  pass_rate: number
+  excellent_count: number
+  pass_count: number
+}

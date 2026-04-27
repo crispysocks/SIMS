@@ -1,10 +1,18 @@
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
 from app.dependencies import require_role
 from app.schemas.response import ApiResponse
-from app.schemas.score import ScoreCreate, ScoreDelete, ScoreRead, ScoreUpdate
+from app.schemas.score import (
+    ClassScoreReportItem,
+    ExamRankingItem,
+    ProgressItem,
+    ScoreCreate,
+    ScoreDelete,
+    ScoreRead,
+    ScoreUpdate,
+)
 from app.services import score as score_service
 
 router = APIRouter(
@@ -50,4 +58,36 @@ def get_scores(
 ) -> ApiResponse[list[ScoreRead]]:
     """查询指定学生的成绩列表。"""
     data = score_service.list_scores_by_student(db, student_no)
+    return ApiResponse(message='查询成功', data=data)
+
+
+@router.get('/ranking/exam')
+def exam_ranking(
+    exam_no: int = Query(..., ge=1, description='考核序次'),
+    exam_name: str = Query(..., description='考试名称'),
+    db: Session = Depends(get_db),
+) -> ApiResponse[list[ExamRankingItem]]:
+    """每次考试的学生成绩排名。"""
+    data = score_service.get_exam_ranking(db, exam_no, exam_name)
+    return ApiResponse(message='查询成功', data=data)
+
+
+@router.get('/ranking/progress')
+def progress_ranking(
+    limit: int = Query(20, ge=1, le=100, description='返回条数'),
+    db: Session = Depends(get_db),
+) -> ApiResponse[list[ProgressItem]]:
+    """学生成绩进步榜（前后两次考试分差）。"""
+    data = score_service.get_progress_ranking(db, limit)
+    return ApiResponse(message='查询成功', data=data)
+
+
+@router.get('/report/class')
+def class_score_report(
+    exam_no: int = Query(..., ge=1, description='考核序次'),
+    exam_name: str = Query(..., description='考试名称'),
+    db: Session = Depends(get_db),
+) -> ApiResponse[list[ClassScoreReportItem]]:
+    """班级成绩报表（平均分、优秀率、及格率）。"""
+    data = score_service.get_class_score_report(db, exam_no, exam_name)
     return ApiResponse(message='查询成功', data=data)
