@@ -19,7 +19,7 @@ FastAPI Student Management System (SIMS). Python 3.12 + SQLAlchemy + MySQL + Rea
 ## Database
 
 - MySQL, database `student_management`. Auto-creates on startup via `app/core/database.py`.
-- Config in `.env` (see `.env.example`). Key vars: `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD`, `CORS_ORIGINS` (JSON string), `UPLOAD_DIR`.
+- Config in `.env` (see `.env.example`). Copy it before running: `cp .env.example .env`. Key vars: `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD`, `CORS_ORIGINS` (JSON string), `UPLOAD_DIR`.
 - Default CORS: `http://localhost:5173` only.
 
 ## Architecture
