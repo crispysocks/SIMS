@@ -31,7 +31,7 @@ apiClient.interceptors.response.use(
       window.location.href = '/login'
     }
     console.error('[API Error]', msg)
-    return Promise.reject(error)
+    return Promise.reject(new Error(msg))
   }
 )
 

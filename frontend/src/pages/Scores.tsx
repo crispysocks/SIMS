@@ -47,7 +47,7 @@ export default function ScoresPage() {
       setFormData({})
       addToast({ title: '成功', description: '成绩已录入' })
     },
-    onError: () => addToast({ title: '错误', description: '录入失败', variant: 'destructive' }),
+    onError: (err: Error) => addToast({ title: '错误', description: err.message || '录入失败', variant: 'destructive' }),
   })
 
   const updateMutation = useMutation({
@@ -59,7 +59,7 @@ export default function ScoresPage() {
       setFormData({})
       addToast({ title: '成功', description: '成绩已更新' })
     },
-    onError: () => addToast({ title: '错误', description: '更新失败', variant: 'destructive' }),
+    onError: (err: Error) => addToast({ title: '错误', description: err.message || '更新失败', variant: 'destructive' }),
   })
 
   const deleteMutation = useMutation({
@@ -68,7 +68,7 @@ export default function ScoresPage() {
       queryClient.invalidateQueries({ queryKey: ['scores'] })
       addToast({ title: '成功', description: '成绩已删除' })
     },
-    onError: () => addToast({ title: '错误', description: '删除失败', variant: 'destructive' }),
+    onError: (err: Error) => addToast({ title: '错误', description: err.message || '删除失败', variant: 'destructive' }),
   })
 
   const canEdit = user ? PERMISSIONS.canEditScore(user.roles) : false
@@ -131,17 +131,16 @@ export default function ScoresPage() {
                 <TableHead>考试名称</TableHead>
                 <TableHead>成绩</TableHead>
                 <TableHead>考试日期</TableHead>
-                <TableHead>备注</TableHead>
                 {(canEdit || canDelete) && <TableHead className="text-right">操作</TableHead>}
               </TableRow>
             </TableHeader>
             <TableBody>
               {isLoading ? (
-                <TableRow><TableCell colSpan={canEdit || canDelete ? 7 : 6} className="text-center py-8">加载中...</TableCell></TableRow>
+                <TableRow><TableCell colSpan={canEdit || canDelete ? 6 : 5} className="text-center py-8">加载中...</TableCell></TableRow>
               ) : !searchStudentNo ? (
-                <TableRow><TableCell colSpan={canEdit || canDelete ? 7 : 6} className="text-center py-8 text-muted-foreground">请输入学号查询成绩</TableCell></TableRow>
+                <TableRow><TableCell colSpan={canEdit || canDelete ? 6 : 5} className="text-center py-8 text-muted-foreground">请输入学号查询成绩</TableCell></TableRow>
               ) : scores?.length === 0 ? (
-                <TableRow><TableCell colSpan={canEdit || canDelete ? 7 : 6} className="text-center py-8 text-muted-foreground">暂无成绩记录</TableCell></TableRow>
+                <TableRow><TableCell colSpan={canEdit || canDelete ? 6 : 5} className="text-center py-8 text-muted-foreground">暂无成绩记录</TableCell></TableRow>
               ) : (
                 scores?.map((score) => (
                   <TableRow key={`${score.student_no}-${score.exam_no}-${score.exam_name}`}>
@@ -154,7 +153,6 @@ export default function ScoresPage() {
                       </Badge>
                     </TableCell>
                     <TableCell>{score.exam_date}</TableCell>
-                    <TableCell>{score.remark}</TableCell>
                     {(canEdit || canDelete) && (
                       <TableCell className="text-right">
                         {canEdit && (
@@ -211,10 +209,6 @@ export default function ScoresPage() {
                 <label className="text-sm font-medium">考试日期</label>
                 <Input type="date" value={formData.exam_date || ''} onChange={(e) => setFormData({ ...formData, exam_date: e.target.value })} />
               </div>
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium">备注</label>
-              <Input value={formData.remark || ''} onChange={(e) => setFormData({ ...formData, remark: e.target.value })} />
             </div>
           </div>
           <DialogFooter>

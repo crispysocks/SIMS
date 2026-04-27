@@ -42,7 +42,6 @@ export interface Score {
   exam_name: string
   score: number
   exam_date: string
-  remark: string
 }
 
 export interface Employment {

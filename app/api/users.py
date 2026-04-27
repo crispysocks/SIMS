@@ -5,6 +5,7 @@ from app.core.database import get_db
 from app.core.security import md5_hash
 from app.dependencies import require_role
 from app.models.user import User
+from app.schemas.response import ApiResponse
 from app.schemas.user import UserRead, UserUpdate
 
 router = APIRouter(
@@ -14,13 +15,14 @@ router = APIRouter(
 )
 
 
-@router.get('', response_model=list[UserRead], summary='获取用户列表')
-def get_users(db: Session = Depends(get_db)):
-    return db.query(User).all()
+@router.get('', summary='获取用户列表')
+def get_users(db: Session = Depends(get_db)) -> ApiResponse[list[UserRead]]:
+    users = db.query(User).all()
+    return ApiResponse(message='查询成功', data=users)
 
 
-@router.put('/{user_id}', response_model=UserRead, summary='更新用户信息')
-def update_user(user_id: int, data: UserUpdate, db: Session = Depends(get_db)):
+@router.put('/{user_id}', summary='更新用户信息')
+def update_user(user_id: int, data: UserUpdate, db: Session = Depends(get_db)) -> ApiResponse[UserRead]:
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail='用户不存在')
@@ -34,11 +36,11 @@ def update_user(user_id: int, data: UserUpdate, db: Session = Depends(get_db)):
 
     db.commit()
     db.refresh(user)
-    return user
+    return ApiResponse(message='更新成功', data=user)
 
 
 @router.delete('/{user_id}', summary='删除用户')
-def delete_user(user_id: int, db: Session = Depends(get_db)):
+def delete_user(user_id: int, db: Session = Depends(get_db)) -> ApiResponse[None]:
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail='用户不存在')
@@ -46,4 +48,4 @@ def delete_user(user_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=403, detail='不能删除默认管理员账号')
     db.delete(user)
     db.commit()
-    return {'message': '删除成功'}
+    return ApiResponse(message='删除成功', data=None)

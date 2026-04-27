@@ -29,7 +29,7 @@ export default function TeachersPage() {
       setFormData({})
       addToast({ title: '成功', description: '教师已添加' })
     },
-    onError: () => addToast({ title: '错误', description: '添加失败', variant: 'destructive' }),
+    onError: (err: Error) => addToast({ title: '错误', description: err.message || '添加失败', variant: 'destructive' }),
   })
 
   const updateMutation = useMutation({
@@ -41,7 +41,7 @@ export default function TeachersPage() {
       setFormData({})
       addToast({ title: '成功', description: '教师已更新' })
     },
-    onError: () => addToast({ title: '错误', description: '更新失败', variant: 'destructive' }),
+    onError: (err: Error) => addToast({ title: '错误', description: err.message || '更新失败', variant: 'destructive' }),
   })
 
   const deleteMutation = useMutation({
@@ -50,7 +50,7 @@ export default function TeachersPage() {
       queryClient.invalidateQueries({ queryKey: ['teachers'] })
       addToast({ title: '成功', description: '教师已删除' })
     },
-    onError: () => addToast({ title: '错误', description: '删除失败', variant: 'destructive' }),
+    onError: (err: Error) => addToast({ title: '错误', description: err.message || '删除失败', variant: 'destructive' }),
   })
 
   const openAdd = () => {

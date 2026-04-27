@@ -32,7 +32,7 @@ export default function UsersPage() {
       setIsEditOpen(false)
       addToast({ title: '成功', description: '用户信息已更新' })
     },
-    onError: () => addToast({ title: '错误', description: '更新失败', variant: 'destructive' }),
+    onError: (err: Error) => addToast({ title: '错误', description: err.message || '更新失败', variant: 'destructive' }),
   })
 
   const deleteMutation = useMutation({
@@ -41,8 +41,8 @@ export default function UsersPage() {
       queryClient.invalidateQueries({ queryKey: ['users'] })
       addToast({ title: '成功', description: '用户已删除' })
     },
-    onError: (err: { response?: { data?: { detail?: string } } }) => {
-      addToast({ title: '错误', description: err.response?.data?.detail || '删除失败', variant: 'destructive' })
+    onError: (err: Error) => {
+      addToast({ title: '错误', description: err.message || '删除失败', variant: 'destructive' })
     },
   })
 

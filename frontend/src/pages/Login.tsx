@@ -37,8 +37,8 @@ export default function LoginPage() {
       setAuth(res.access_token, res.username, res.roles)
       navigate('/')
     } catch (err: unknown) {
-      const axiosError = err as { response?: { data?: { detail?: string } } }
-      setError(axiosError.response?.data?.detail || (isRegister ? '注册失败' : '登录失败'))
+      const error = err as Error
+      setError(error.message || (isRegister ? '注册失败' : '登录失败'))
     } finally {
       setLoading(false)
     }

@@ -61,7 +61,7 @@ export default function EmploymentPage() {
       setFormData({})
       addToast({ title: '成功', description: '就业信息已添加' })
     },
-    onError: () => addToast({ title: '错误', description: '添加失败', variant: 'destructive' }),
+    onError: (err: Error) => addToast({ title: '错误', description: err.message || '添加失败', variant: 'destructive' }),
   })
 
   const updateMutation = useMutation({
@@ -74,7 +74,7 @@ export default function EmploymentPage() {
       setFormData({})
       addToast({ title: '成功', description: '就业信息已更新' })
     },
-    onError: () => addToast({ title: '错误', description: '更新失败', variant: 'destructive' }),
+    onError: (err: Error) => addToast({ title: '错误', description: err.message || '更新失败', variant: 'destructive' }),
   })
 
   const deleteMutation = useMutation({
@@ -83,7 +83,7 @@ export default function EmploymentPage() {
       queryClient.invalidateQueries({ queryKey: ['employment'] })
       addToast({ title: '成功', description: '就业信息已删除' })
     },
-    onError: () => addToast({ title: '错误', description: '删除失败', variant: 'destructive' }),
+    onError: (err: Error) => addToast({ title: '错误', description: err.message || '删除失败', variant: 'destructive' }),
   })
 
   const canEdit = user ? PERMISSIONS.canEditEmployment(user.roles) : false
@@ -126,7 +126,7 @@ export default function EmploymentPage() {
       </div>
 
       <div className="flex gap-3 flex-wrap">
-        <Select value={filterType} onChange={(e) => { setFilterType(e.target.value as any); setFilterValue('') }} className="w-40">
+        <Select value={filterType} onChange={(e) => { setFilterType(e.target.value as typeof filterType); setFilterValue('') }} className="w-40">
           <option value="all">全部</option>
           <option value="student">按学生</option>
           <option value="class">按班级</option>

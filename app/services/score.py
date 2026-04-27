@@ -50,8 +50,6 @@ def update_score(db: Session, data: ScoreUpdate) -> ScoreRead:
     score.score = data.score
     if data.exam_date is not None:
         score.exam_date = data.exam_date
-    if data.remark is not None:
-        score.remark = data.remark
     db.commit()
     db.refresh(score)
     return ScoreRead.model_validate(score)

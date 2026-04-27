@@ -88,13 +88,12 @@ export default function StudentDetailPage() {
                       <TableHead>考试名称</TableHead>
                       <TableHead>成绩</TableHead>
                       <TableHead>考试日期</TableHead>
-                      <TableHead>备注</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {scores?.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">暂无成绩记录</TableCell>
+                        <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">暂无成绩记录</TableCell>
                       </TableRow>
                     ) : (
                       scores?.map((score) => (
@@ -107,7 +106,6 @@ export default function StudentDetailPage() {
                             </Badge>
                           </TableCell>
                           <TableCell>{score.exam_date}</TableCell>
-                          <TableCell>{score.remark}</TableCell>
                         </TableRow>
                       ))
                     )}

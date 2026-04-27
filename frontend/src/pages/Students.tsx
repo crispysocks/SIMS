@@ -43,7 +43,7 @@ export default function StudentsPage() {
       setSelectedStudents([])
       addToast({ title: '成功', description: '学生已删除' })
     },
-    onError: () => addToast({ title: '错误', description: '删除失败', variant: 'destructive' }),
+    onError: (err: Error) => addToast({ title: '错误', description: err.message || '删除失败', variant: 'destructive' }),
   })
 
   const restoreMutation = useMutation({
@@ -53,7 +53,7 @@ export default function StudentsPage() {
       setSelectedStudents([])
       addToast({ title: '成功', description: '学生已恢复' })
     },
-    onError: () => addToast({ title: '错误', description: '恢复失败', variant: 'destructive' }),
+    onError: (err: Error) => addToast({ title: '错误', description: err.message || '恢复失败', variant: 'destructive' }),
   })
 
   const createMutation = useMutation({
@@ -64,7 +64,7 @@ export default function StudentsPage() {
       setFormData({})
       addToast({ title: '成功', description: '学生已添加' })
     },
-    onError: () => addToast({ title: '错误', description: '添加失败', variant: 'destructive' }),
+    onError: (err: Error) => addToast({ title: '错误', description: err.message || '添加失败', variant: 'destructive' }),
   })
 
   const filteredStudents = students?.filter((s) => {

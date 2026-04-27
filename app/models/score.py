@@ -1,6 +1,6 @@
 from datetime import date
 
-from sqlalchemy import Column, Date, ForeignKey, Integer, Numeric, String, PrimaryKeyConstraint
+from sqlalchemy import Column, Date, ForeignKey, Integer, String, PrimaryKeyConstraint
 
 from app.core.database import Base
 
@@ -11,9 +11,8 @@ class Score(Base):
     student_no = Column(String(20), ForeignKey('students.student_no', ondelete='CASCADE'), nullable=False, comment='学生编号')
     exam_no = Column(Integer, nullable=False, comment='考核序次')
     exam_name = Column(String(50), nullable=False, comment='考试名称')
-    score = Column(Numeric(5, 2), nullable=False, comment='成绩')
+    score = Column(Integer, nullable=False, comment='成绩')
     exam_date = Column(Date, comment='考核日期')
-    remark = Column(String(200), comment='备注')
     isdeleted = Column(Integer, default=0, comment='逻辑删除标记 0=正常 1=已删除')
 
     __table_args__ = (

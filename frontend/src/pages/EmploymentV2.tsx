@@ -41,7 +41,7 @@ export default function EmploymentV2Page() {
       setFormData({})
       addToast({ title: '成功', description: '就业信息已添加' })
     },
-    onError: () => addToast({ title: '错误', description: '添加失败', variant: 'destructive' }),
+    onError: (err: Error) => addToast({ title: '错误', description: err.message || '添加失败', variant: 'destructive' }),
   })
 
   const updateMutation = useMutation({
@@ -54,7 +54,7 @@ export default function EmploymentV2Page() {
       setFormData({})
       addToast({ title: '成功', description: '就业信息已更新' })
     },
-    onError: () => addToast({ title: '错误', description: '更新失败', variant: 'destructive' }),
+    onError: (err: Error) => addToast({ title: '错误', description: err.message || '更新失败', variant: 'destructive' }),
   })
 
   const deleteMutation = useMutation({
@@ -64,7 +64,7 @@ export default function EmploymentV2Page() {
       setSelectedItems([])
       addToast({ title: '成功', description: '已软删除' })
     },
-    onError: () => addToast({ title: '错误', description: '删除失败', variant: 'destructive' }),
+    onError: (err: Error) => addToast({ title: '错误', description: err.message || '删除失败', variant: 'destructive' }),
   })
 
   const restoreMutation = useMutation({
@@ -74,7 +74,7 @@ export default function EmploymentV2Page() {
       setSelectedItems([])
       addToast({ title: '成功', description: '已恢复' })
     },
-    onError: () => addToast({ title: '错误', description: '恢复失败', variant: 'destructive' }),
+    onError: (err: Error) => addToast({ title: '错误', description: err.message || '恢复失败', variant: 'destructive' }),
   })
 
   const canEdit = user ? PERMISSIONS.canEditEmployment(user.roles) : false
