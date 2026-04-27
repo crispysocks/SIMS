@@ -44,7 +44,7 @@ def get_db():
 
 
 def init_db() -> None:
-    """在应用启动时初始化表结构（表不存在则创建）。"""
+    """在应用启动时初始化表结构（表不存在则创建），并确保存在默认管理员账号。"""
     import app.models.classes  # noqa: F401
     import app.models.employment  # noqa: F401
     import app.models.score  # noqa: F401
@@ -53,3 +53,20 @@ def init_db() -> None:
     import app.models.user  # noqa: F401
 
     Base.metadata.create_all(bind=engine)
+
+    from app.models.user import User
+    from app.core.security import md5_hash
+
+    db = SessionLocal()
+    try:
+        admin = db.query(User).filter(User.username == 'admin').first()
+        if not admin:
+            db.add(User(
+                username='admin',
+                password_hash=md5_hash('123456'),
+                roles='admin,teacher',
+                is_active=1,
+            ))
+            db.commit()
+    finally:
+        db.close()

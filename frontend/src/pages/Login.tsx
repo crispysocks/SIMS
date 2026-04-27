@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '@/stores/authStore'
-import { login } from '@/api/auth'
+import { login, register } from '@/api/auth'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -11,8 +11,10 @@ import { School } from 'lucide-react'
 export default function LoginPage() {
   const navigate = useNavigate()
   const { setAuth } = useAuthStore()
+  const [isRegister, setIsRegister] = useState(false)
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
@@ -23,14 +25,20 @@ export default function LoginPage() {
       setError('请输入用户名和密码')
       return
     }
+    if (isRegister && password !== confirmPassword) {
+      setError('两次输入的密码不一致')
+      return
+    }
     setLoading(true)
     try {
-      const res = await login({ username: username.trim(), password: password.trim() })
+      const res = isRegister
+        ? await register({ username: username.trim(), password: password.trim() })
+        : await login({ username: username.trim(), password: password.trim() })
       setAuth(res.access_token, res.username, res.roles)
       navigate('/')
     } catch (err: unknown) {
       const axiosError = err as { response?: { data?: { detail?: string } } }
-      setError(axiosError.response?.data?.detail || '登录失败')
+      setError(axiosError.response?.data?.detail || (isRegister ? '注册失败' : '登录失败'))
     } finally {
       setLoading(false)
     }
@@ -43,7 +51,7 @@ export default function LoginPage() {
           <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
             <School className="h-6 w-6 text-primary" />
           </div>
-          <CardTitle className="text-2xl">SIMS 登录</CardTitle>
+          <CardTitle className="text-2xl">SIMS {isRegister ? '注册' : '登录'}</CardTitle>
           <CardDescription>学生信息管理系统</CardDescription>
         </CardHeader>
         <CardContent>
@@ -69,13 +77,52 @@ export default function LoginPage() {
               />
             </div>
 
+            {isRegister && (
+              <div className="space-y-2">
+                <Label htmlFor="confirmPassword">确认密码</Label>
+                <Input
+                  id="confirmPassword"
+                  type="password"
+                  placeholder="请再次输入密码"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                />
+              </div>
+            )}
+
             {error && (
               <div className="text-sm text-destructive">{error}</div>
             )}
 
             <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? '登录中...' : '登录'}
+              {loading ? (isRegister ? '注册中...' : '登录中...') : (isRegister ? '注册' : '登录')}
             </Button>
+
+            <div className="text-center text-sm">
+              {isRegister ? (
+                <span>
+                  已有账号？
+                  <button
+                    type="button"
+                    className="text-primary hover:underline"
+                    onClick={() => { setIsRegister(false); setError('') }}
+                  >
+                    去登录
+                  </button>
+                </span>
+              ) : (
+                <span>
+                  还没有账号？
+                  <button
+                    type="button"
+                    className="text-primary hover:underline"
+                    onClick={() => { setIsRegister(true); setError('') }}
+                  >
+                    去注册
+                  </button>
+                </span>
+              )}
+            </div>
           </form>
         </CardContent>
       </Card>

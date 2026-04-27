@@ -17,7 +17,7 @@ def register(data: UserCreate, db: Session = Depends(get_db)):
     user = User(
         username=data.username,
         password_hash=md5_hash(data.password),
-        roles=data.roles,
+        roles='teacher',
     )
     db.add(user)
     db.commit()
