@@ -1,25 +1,46 @@
 from collections.abc import Callable
 
-from fastapi import Depends, Header, HTTPException, status
+from fastapi import Depends, HTTPException, status
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import BaseModel, Field
+
+from app.core.security import decode_access_token
+
+security = HTTPBearer(auto_error=False)
 
 
 class CurrentUser(BaseModel):
     """当前登录用户信息模型。"""
 
-    username: str = Field(default='demo_admin')
-    roles: list[str] = Field(default_factory=lambda: ['admin', 'teacher'])
+    username: str
+    roles: list[str] = Field(default_factory=list)
 
 
-def get_current_user(
-    x_user: str | None = Header(default=None),
-    x_roles: str | None = Header(default=None),
-) -> CurrentUser:
-    """从请求头解析当前用户，作为开发阶段的简化认证实现。"""
-    roles = ['admin', 'teacher']
-    if x_roles:
-        roles = [item.strip() for item in x_roles.split(',') if item.strip()]
-    return CurrentUser(username=x_user or 'demo_admin', roles=roles)
+def get_current_user(credentials: HTTPAuthorizationCredentials | None = Depends(security)) -> CurrentUser:
+    """从 JWT Token 解析当前用户。"""
+    if not credentials or not credentials.credentials:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail='未提供认证令牌',
+            headers={'WWW-Authenticate': 'Bearer'},
+        )
+    payload = decode_access_token(credentials.credentials)
+    if not payload:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail='令牌无效或已过期',
+            headers={'WWW-Authenticate': 'Bearer'},
+        )
+    username = payload.get('sub')
+    roles_str = payload.get('roles', '')
+    roles = [r.strip() for r in roles_str.split(',') if r.strip()] if roles_str else []
+    if not username:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail='令牌中无用户信息',
+            headers={'WWW-Authenticate': 'Bearer'},
+        )
+    return CurrentUser(username=username, roles=roles)
 
 
 def require_role(allowed_roles: list[str]) -> Callable:

@@ -10,7 +10,7 @@ import { Select } from '@/components/ui/select'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { useToast } from '@/components/ui/toast'
-import { Plus, Trash2, Pencil, Search, RotateCcw } from 'lucide-react'
+import { Plus, Trash2, Pencil, RotateCcw } from 'lucide-react'
 import type { EmploymentV2 } from '@/types'
 
 export default function EmploymentV2Page() {

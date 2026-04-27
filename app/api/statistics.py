@@ -2,16 +2,17 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
-from app.dependencies import CurrentUser, get_current_user
 from app.services import statistics as statistics_service
 
-router = APIRouter(prefix='/api/statistics', tags=['统计分析'])
+router = APIRouter(
+    prefix='/api/statistics',
+    tags=['统计分析'],
+)
 
 
 @router.get('/age-filter')
 def age_filter(
     age: int = Query(30, ge=0),
-    current_user: CurrentUser = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     """查询达到指定年龄的学生。"""
@@ -20,7 +21,6 @@ def age_filter(
 
 @router.get('/class-gender')
 def class_gender(
-    current_user: CurrentUser = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     """统计每个班级的男女生人数。"""
@@ -30,7 +30,6 @@ def class_gender(
 @router.get('/always-above')
 def always_above(
     score: int = Query(80, ge=0, le=100),
-    current_user: CurrentUser = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     """查询每次考试都高于指定分数的学生。"""
@@ -39,7 +38,6 @@ def always_above(
 
 @router.get('/failed-twice')
 def failed_twice(
-    current_user: CurrentUser = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     """查询两次及以上不及格的学生。"""
@@ -48,7 +46,6 @@ def failed_twice(
 
 @router.get('/class-avg-score')
 def class_avg_score(
-    current_user: CurrentUser = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     """统计班级平均分。"""
@@ -57,7 +54,6 @@ def class_avg_score(
 
 @router.get('/top-salary')
 def top_salary(
-    current_user: CurrentUser = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     """统计高薪学生。"""
@@ -66,7 +62,6 @@ def top_salary(
 
 @router.get('/student-offer-duration')
 def student_offer_duration(
-    current_user: CurrentUser = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     """统计个人就业时长。"""
@@ -75,7 +70,6 @@ def student_offer_duration(
 
 @router.get('/class-offer-duration')
 def class_offer_duration(
-    current_user: CurrentUser = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     """统计班级平均就业时长。"""

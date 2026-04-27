@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
+from app.dependencies import require_role
 from app.schemas.student import StudentCreate, StudentUpdate
 from app.services.student import (
     add_student_db,
@@ -20,7 +21,10 @@ from app.services.student import (
 )
 from app.models.student import Student
 
-router = APIRouter(prefix='/students', tags=['学生基本信息管理模块'])
+router = APIRouter(
+    prefix='/students',
+    tags=['学生基本信息管理模块'],
+)
 
 
 @router.get('/all', summary='获取学生列表')
@@ -41,7 +45,7 @@ def get_student_class(class_no: str, db: Session = Depends(get_db)):
     return {'message': '查询成功', 'data': data}
 
 
-@router.post('/add', summary='创建一个新学生')
+@router.post('/add', summary='创建一个新学生', dependencies=[Depends(require_role(['admin']))])
 def add_student(new_student: StudentCreate, db: Session = Depends(get_db)):
     result = chick_student(db, new_student.student_no)
     if result is True:
@@ -50,7 +54,7 @@ def add_student(new_student: StudentCreate, db: Session = Depends(get_db)):
     return student_response(new_student)
 
 
-@router.delete('/batch', summary='软删除')
+@router.delete('/batch', summary='软删除', dependencies=[Depends(require_role(['admin']))])
 def delete_student(no_list: List[str], db: Session = Depends(get_db)):
     for student_no in no_list:
         result = chick_student(db, student_no)
@@ -61,7 +65,7 @@ def delete_student(no_list: List[str], db: Session = Depends(get_db)):
     return {'message': '删除成功'}
 
 
-@router.delete('/back', summary='恢复软删除的学生')
+@router.delete('/back', summary='恢复软删除的学生', dependencies=[Depends(require_role(['admin']))])
 def back_student(no_list: List[str], db: Session = Depends(get_db)):
     for student_no in no_list:
         result = chick_student(db, student_no)
@@ -85,7 +89,7 @@ async def get_anyony_student(student_no: str, db: Session = Depends(get_db)):
     raise HTTPException(status_code=400, detail='学生不存在或已被删除')
 
 
-@router.put('/{student_no}', summary='修改某个学生信息')
+@router.put('/{student_no}', summary='修改某个学生信息', dependencies=[Depends(require_role(['admin']))])
 def update_student(student_no: str, update_student: StudentUpdate, db: Session = Depends(get_db)):
     result = chick_student(db, student_no)
     if result is True:

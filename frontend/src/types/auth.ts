@@ -5,8 +5,9 @@ export interface User {
 
 export interface AuthState {
   user: User | null
+  token: string | null
   isLoggedIn: boolean
-  login: (username: string, roles: string[]) => void
+  setAuth: (token: string, username: string, roles: string[]) => void
   logout: () => void
   hasRole: (role: string) => boolean
 }

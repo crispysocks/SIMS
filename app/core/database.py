@@ -50,5 +50,6 @@ def init_db() -> None:
     import app.models.score  # noqa: F401
     import app.models.student  # noqa: F401
     import app.models.teacher  # noqa: F401
+    import app.models.user  # noqa: F401
 
     Base.metadata.create_all(bind=engine)

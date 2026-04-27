@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { useToast } from '@/components/ui/toast'
-import { Plus, Trash2, Pencil, Users } from 'lucide-react'
+import { Plus, Trash2, Pencil } from 'lucide-react'
 import type { ClassInfo } from '@/types'
 
 export default function ClassesPage() {

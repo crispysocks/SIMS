@@ -1,31 +1,39 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '@/stores/authStore'
+import { login } from '@/api/auth'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Checkbox } from '@/components/ui/checkbox'
 import { School } from 'lucide-react'
 
 export default function LoginPage() {
   const navigate = useNavigate()
-  const { login } = useAuthStore()
+  const { setAuth } = useAuthStore()
   const [username, setUsername] = useState('')
-  const [roles, setRoles] = useState<string[]>(['admin'])
+  const [password, setPassword] = useState('')
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (username.trim()) {
-      login(username.trim(), roles)
-      navigate('/')
+    setError('')
+    if (!username.trim() || !password.trim()) {
+      setError('请输入用户名和密码')
+      return
     }
-  }
-
-  const toggleRole = (role: string) => {
-    setRoles((prev) =>
-      prev.includes(role) ? prev.filter((r) => r !== role) : [...prev, role]
-    )
+    setLoading(true)
+    try {
+      const res = await login({ username: username.trim(), password: password.trim() })
+      setAuth(res.access_token, res.username, res.roles)
+      navigate('/')
+    } catch (err: unknown) {
+      const axiosError = err as { response?: { data?: { detail?: string } } }
+      setError(axiosError.response?.data?.detail || '登录失败')
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -51,27 +59,22 @@ export default function LoginPage() {
             </div>
 
             <div className="space-y-2">
-              <Label>角色选择</Label>
-              <div className="flex gap-4">
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <Checkbox
-                    checked={roles.includes('admin')}
-                    onCheckedChange={() => toggleRole('admin')}
-                  />
-                  <span className="text-sm">管理员</span>
-                </label>
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <Checkbox
-                    checked={roles.includes('teacher')}
-                    onCheckedChange={() => toggleRole('teacher')}
-                  />
-                  <span className="text-sm">教师</span>
-                </label>
-              </div>
+              <Label htmlFor="password">密码</Label>
+              <Input
+                id="password"
+                type="password"
+                placeholder="请输入密码"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
             </div>
 
-            <Button type="submit" className="w-full">
-              登录
+            {error && (
+              <div className="text-sm text-destructive">{error}</div>
+            )}
+
+            <Button type="submit" className="w-full" disabled={loading}>
+              {loading ? '登录中...' : '登录'}
             </Button>
           </form>
         </CardContent>

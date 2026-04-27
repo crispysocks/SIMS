@@ -8,10 +8,9 @@ const apiClient = axios.create({
 })
 
 apiClient.interceptors.request.use((config) => {
-  const { user } = useAuthStore.getState()
-  if (user) {
-    config.headers['X-User'] = user.username
-    config.headers['X-Roles'] = user.roles.join(',')
+  const { token } = useAuthStore.getState()
+  if (token) {
+    config.headers['Authorization'] = `Bearer ${token}`
   }
   return config
 })
@@ -25,7 +24,12 @@ apiClient.interceptors.response.use(
     return response
   },
   (error) => {
+    const status = error.response?.status
     const msg = error.response?.data?.detail || error.message || '请求失败'
+    if (status === 401) {
+      useAuthStore.getState().logout()
+      window.location.href = '/login'
+    }
     console.error('[API Error]', msg)
     return Promise.reject(error)
   }

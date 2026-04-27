@@ -19,6 +19,8 @@ class Settings(BaseSettings):
     UPLOAD_DIR: str = "./uploads"
     MAX_FILE_SIZE: int = 5242880
 
+    SECRET_KEY: str = "sims-secret-key-change-in-production"
+
     model_config = SettingsConfigDict(env_file=".env", case_sensitive=True)
 
     @property
