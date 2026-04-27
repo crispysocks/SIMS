@@ -4,7 +4,7 @@ import { Layout } from '@/components/layout/Layout'
 import LoginPage from '@/pages/Login'
 import DashboardPage from '@/pages/Dashboard'
 import StudentsPage from '@/pages/Students'
-import StudentDetailPage from '@/pages/StudentDetail'
+
 import TeachersPage from '@/pages/Teachers'
 import ClassesPage from '@/pages/Classes'
 import ScoresPage from '@/pages/Scores'
@@ -32,7 +32,7 @@ export function AppRoutes() {
       >
         <Route index element={<DashboardPage />} />
         <Route path="students" element={<StudentsPage />} />
-        <Route path="students/:student_no" element={<StudentDetailPage />} />
+
         <Route path="teachers" element={<TeachersPage />} />
         <Route path="classes" element={<ClassesPage />} />
         <Route path="scores" element={<ScoresPage />} />

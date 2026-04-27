@@ -170,8 +170,8 @@ def delete_back_db(db: Session, student_no: str, delete_student: int = 0):
 
 
 def get_student_by_class_db(db: Session, class_no: str):
-    """按班级查询学生。"""
-    data = db.query(Student).filter(Student.class_no == class_no).all()
+    """按班级查询学生（排除已逻辑删除的）。"""
+    data = db.query(Student).filter(Student.class_no == class_no, Student.isdeleted == 0).all()
     return data
 
 
