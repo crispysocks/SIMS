@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api import (
+    agent_router,
     auth_router,
     classes_router,
     employment_router,
@@ -25,6 +26,7 @@ app.add_middleware(
     allow_headers=['*'],
 )
 
+app.include_router(agent_router)
 app.include_router(auth_router)
 app.include_router(students_router)
 app.include_router(classes_router)

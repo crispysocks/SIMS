@@ -1,3 +1,4 @@
+from app.api.agent import router as agent_router
 from app.api.auth import router as auth_router
 from app.api.classes import router as classes_router
 from app.api.employment import router as employment_router
@@ -9,6 +10,7 @@ from app.api.teachers import router as teachers_router
 from app.api.users import router as users_router
 
 __all__ = [
+    'agent_router',
     'auth_router',
     'classes_router',
     'employment_router',

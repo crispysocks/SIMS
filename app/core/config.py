@@ -21,6 +21,8 @@ class Settings(BaseSettings):
 
     SECRET_KEY: str = "sims-secret-key-change-in-production"
 
+    LOAD_SAMPLE_DATA: bool = False
+
     model_config = SettingsConfigDict(env_file=".env", case_sensitive=True)
 
     @property

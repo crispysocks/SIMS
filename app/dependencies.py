@@ -1,6 +1,6 @@
 from collections.abc import Callable
 
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, Header, HTTPException, Request, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import BaseModel, Field
 
@@ -16,8 +16,17 @@ class CurrentUser(BaseModel):
     roles: list[str] = Field(default_factory=list)
 
 
-def get_current_user(credentials: HTTPAuthorizationCredentials | None = Depends(security)) -> CurrentUser:
-    """从 JWT Token 解析当前用户。"""
+def get_current_user(
+    request: Request,
+    credentials: HTTPAuthorizationCredentials | None = Depends(security),
+) -> CurrentUser:
+    """从 JWT Token 或 Header 中解析当前用户。"""
+    x_user = request.headers.get('X-User')
+    x_roles = request.headers.get('X-Roles')
+    if x_user and x_roles:
+        roles = [r.strip() for r in x_roles.split(',') if r.strip()]
+        return CurrentUser(username=x_user, roles=roles)
+
     if not credentials or not credentials.credentials:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
