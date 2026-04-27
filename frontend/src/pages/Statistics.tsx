@@ -187,7 +187,7 @@ export default function StatisticsPage() {
                         <TableCell>{student.student_no}</TableCell>
                         <TableCell>{student.name}</TableCell>
                         <TableCell>{student.gender}</TableCell>
-                        <TableCell>{student.age}</TableCell>
+                        <TableCell>{student.age ?? '-'}</TableCell>
                         <TableCell>{student.class_no}</TableCell>
                       </TableRow>
                     ))}

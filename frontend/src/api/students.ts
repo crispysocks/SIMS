@@ -8,6 +8,6 @@ export const studentApi = {
   getById: (studentNo: string) => apiClient.get<Student>(`/students/${studentNo}`),
   create: (data: Omit<Student, 'student_no'> & { student_no: string }) => apiClient.post<Student>('/students/add', data),
   update: (studentNo: string, data: Partial<Student>) => apiClient.put<Student>(`/students/${studentNo}`, data),
-  batchDelete: (noList: string[]) => apiClient.delete('/students/batch', { data: { no_list: noList } }),
-  batchRestore: (noList: string[]) => apiClient.delete('/students/back', { data: { no_list: noList } }),
+  batchDelete: (noList: string[]) => apiClient.request({ method: 'DELETE', url: '/students/batch', data: noList }),
+  batchRestore: (noList: string[]) => apiClient.request({ method: 'DELETE', url: '/students/back', data: noList }),
 }

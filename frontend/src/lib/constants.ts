@@ -12,6 +12,8 @@ export const PERMISSIONS = {
 } as const
 
 export const GENDER_MAP: Record<string, string> = {
+  '男': '男',
+  '女': '女',
   'male': '男',
   'female': '女',
   'other': '其他',

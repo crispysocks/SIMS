@@ -59,16 +59,16 @@ export default function StudentDetailPage() {
                 <InfoItem label="学号" value={student.student_no} />
                 <InfoItem label="性别" value={GENDER_MAP[student.gender] || student.gender} />
                 <InfoItem label="班级" value={student.class_no} />
-                <InfoItem label="年龄" value={String(student.age)} />
-                <InfoItem label="电话" value={student.phone} />
-                <InfoItem label="籍贯" value={student.native_place} />
-                <InfoItem label="毕业院校" value={student.graduation_school} />
-                <InfoItem label="专业" value={student.major} />
-                <InfoItem label="学历" value={student.education_level} />
-                <InfoItem label="顾问" value={student.consultant} />
-                <InfoItem label="身份证" value={student.id_card} />
-                <InfoItem label="入学时间" value={student.enrollment_time} />
-                <InfoItem label="毕业时间" value={student.graduation_time} />
+                <InfoItem label="年龄" value={student.age != null ? String(student.age) : '-'} />
+                <InfoItem label="电话" value={student.phone ?? '-'} />
+                <InfoItem label="籍贯" value={student.birth_place ?? '-'} />
+                <InfoItem label="毕业院校" value={student.graduate_school ?? '-'} />
+                <InfoItem label="专业" value={student.major ?? '-'} />
+                <InfoItem label="学历" value={student.education ?? '-'} />
+                <InfoItem label="顾问" value={student.advisor_name ?? '-'} />
+                <InfoItem label="身份证" value={student.id_card ?? '-'} />
+                <InfoItem label="入学时间" value={student.entrance_time ?? '-'} />
+                <InfoItem label="毕业时间" value={student.graduate_time ?? '-'} />
               </div>
             </CardContent>
           </Card>

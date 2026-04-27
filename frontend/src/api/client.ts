@@ -25,12 +25,18 @@ apiClient.interceptors.response.use(
   },
   (error) => {
     const status = error.response?.status
-    const msg = error.response?.data?.detail || error.message || '请求失败'
+    const data = error.response?.data
+    let msg: string
+    if (Array.isArray(data?.detail)) {
+      msg = data.detail.map((d: any) => d.msg || JSON.stringify(d)).join('; ')
+    } else {
+      msg = data?.detail || error.message || '请求失败'
+    }
     if (status === 401) {
       useAuthStore.getState().logout()
       window.location.href = '/login'
     }
-    console.error('[API Error]', msg)
+    console.error('[API Error]', status, data)
     return Promise.reject(new Error(msg))
   }
 )

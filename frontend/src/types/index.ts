@@ -3,16 +3,16 @@ export interface Student {
   name: string
   class_no: string
   gender: string
-  age: number
-  native_place: string
-  graduation_school: string
-  major: string
-  enrollment_time: string
-  graduation_time: string
-  education_level: string
-  consultant: string
-  phone: string
-  id_card: string
+  age?: number | null
+  birth_place?: string | null
+  graduate_school?: string | null
+  major?: string | null
+  entrance_time: string
+  graduate_time?: string | null
+  education: string
+  advisor_name?: string | null
+  phone?: string | null
+  id_card?: string | null
 }
 
 export interface Teacher {

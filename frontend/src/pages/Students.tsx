@@ -183,8 +183,8 @@ export default function StudentsPage() {
                     <TableCell className="font-medium">{student.name}</TableCell>
                     <TableCell>{GENDER_MAP[student.gender] || student.gender}</TableCell>
                     <TableCell>{student.class_no}</TableCell>
-                    <TableCell>{student.phone}</TableCell>
-                    <TableCell>{student.age}</TableCell>
+                    <TableCell>{student.phone ?? '-'}</TableCell>
+                    <TableCell>{student.age ?? '-'}</TableCell>
                     <TableCell className="text-right">
                       <Button variant="ghost" size="sm" onClick={() => navigate(`/students/${student.student_no}`)}>
                         <Eye className="h-4 w-4" />
@@ -217,15 +217,15 @@ export default function StudentsPage() {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>性别</Label>
-                <Select value={formData.gender || ''} onChange={(e) => setFormData({ ...formData, gender: e.target.value })}>
+                <Select value={formData.gender || ''} onChange={(e) => { const val = e.target.value; setFormData(prev => ({ ...prev, gender: val })) }}>
                   <option value="">请选择</option>
-                  <option value="male">男</option>
-                  <option value="female">女</option>
+                  <option value="男">男</option>
+                  <option value="女">女</option>
                 </Select>
               </div>
               <div className="space-y-2">
                 <Label>年龄</Label>
-                <Input type="number" value={formData.age || ''} onChange={(e) => setFormData({ ...formData, age: Number(e.target.value) })} />
+                <Input type="number" value={formData.age ?? ''} onChange={(e) => setFormData({ ...formData, age: e.target.value ? Number(e.target.value) : undefined })} />
               </div>
             </div>
             <div className="space-y-2">
@@ -240,6 +240,27 @@ export default function StudentsPage() {
             <div className="space-y-2">
               <Label>电话</Label>
               <Input value={formData.phone || ''} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>入学时间</Label>
+                <Input type="date" value={formData.entrance_time || ''} onChange={(e) => setFormData({ ...formData, entrance_time: e.target.value })} />
+              </div>
+              <div className="space-y-2">
+                <Label>学历</Label>
+                <Select value={formData.education || ''} onChange={(e) => setFormData({ ...formData, education: e.target.value })}>
+                  <option value="">请选择</option>
+                  <option value="专科">专科</option>
+                  <option value="本科">本科</option>
+                  <option value="硕士">硕士</option>
+                </Select>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>身份证号</Label>
+                <Input value={formData.id_card || ''} onChange={(e) => setFormData({ ...formData, id_card: e.target.value })} />
+              </div>
             </div>
           </div>
           <DialogFooter>
