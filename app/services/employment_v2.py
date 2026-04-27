@@ -48,7 +48,7 @@ def add_stu_test(db: Session, emp_model: EmploymentCreate):
         existing.salary = emp_model.salary
         existing.position = emp_model.position
         existing.work_location = emp_model.work_location
-        existing.employment_status = emp_model.employment_status or '在聘'
+        existing.employment_status = emp_model.employment_status
         db.commit()
         db.refresh(existing)
         return existing
@@ -61,7 +61,7 @@ def add_stu_test(db: Session, emp_model: EmploymentCreate):
         salary=emp_model.salary,
         position=emp_model.position,
         work_location=emp_model.work_location,
-        employment_status=emp_model.employment_status or '在聘',
+        employment_status=emp_model.employment_status,
         isdeleted=0,
     )
     db.add(emp)
@@ -80,9 +80,22 @@ def update_stu_test(db: Session, student_no: str, emp_model: EmploymentUpdate):
     if not emp:
         return None
 
-    update_data = emp_model.model_dump(exclude_unset=True)
-    for key, value in update_data.items():
-        setattr(emp, key, value)
+    # 逐个字段判断，仅当传入的值不为 None 时才更新
+    if emp_model.employment_open_time is not None:
+        emp.employment_open_time = emp_model.employment_open_time
+    if emp_model.offer_time is not None:
+        emp.offer_time = emp_model.offer_time
+    if emp_model.company_name is not None:
+        emp.company_name = emp_model.company_name
+    if emp_model.salary is not None:
+        emp.salary = emp_model.salary
+    if emp_model.position is not None:
+        emp.position = emp_model.position
+    if emp_model.work_location is not None:
+        emp.work_location = emp_model.work_location
+    if emp_model.employment_status is not None:
+        emp.employment_status = emp_model.employment_status
+
     db.commit()
     db.refresh(emp)
     return emp
