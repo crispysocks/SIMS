@@ -47,11 +47,10 @@ def get_student_class(class_no: str, db: Session = Depends(get_db)) -> ApiRespon
 
 @router.post('/add', summary='创建一个新学生', dependencies=[Depends(require_role(['admin']))])
 def add_student(new_student: StudentCreate, db: Session = Depends(get_db)) -> ApiResponse[StudentRead]:
-    result = chick_student(db, new_student.student_no)
-    if result is True:
+    result = add_student_db(db, Student(**new_student.model_dump()))
+    if result is None:
         raise HTTPException(status_code=400, detail='学生已存在')
-    add_student_db(db, Student(**new_student.model_dump()))
-    return ApiResponse(message='添加成功', data=StudentRead.model_validate(new_student))
+    return ApiResponse(message='添加成功', data=StudentRead.model_validate(result))
 
 
 @router.delete('/batch', summary='软删除', dependencies=[Depends(require_role(['admin']))])
