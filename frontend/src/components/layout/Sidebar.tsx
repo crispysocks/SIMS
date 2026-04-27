@@ -10,6 +10,7 @@ import {
   Briefcase,
   BriefcaseBusiness,
   BarChart3,
+  Shield,
   Menu,
   ChevronLeft,
 } from 'lucide-react'
@@ -24,6 +25,7 @@ const menuItems = [
   { icon: Briefcase, label: '就业管理 v1', path: '/employment' },
   { icon: BriefcaseBusiness, label: '就业管理 v2', path: '/employment-v2' },
   { icon: BarChart3, label: '统计分析', path: '/statistics' },
+  { icon: Shield, label: '用户管理', path: '/users', adminOnly: true },
 ]
 
 export function Sidebar() {
@@ -53,6 +55,9 @@ export function Sidebar() {
 
       <nav className="flex-1 overflow-y-auto py-4 px-2 space-y-1">
         {menuItems.map((item) => {
+          if (item.adminOnly && !user?.roles.includes('admin')) {
+            return null
+          }
           const isActive = location.pathname === item.path || location.pathname.startsWith(`${item.path}/`)
           const Icon = item.icon
           return (

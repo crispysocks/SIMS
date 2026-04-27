@@ -11,6 +11,7 @@ import ScoresPage from '@/pages/Scores'
 import EmploymentPage from '@/pages/Employment'
 import EmploymentV2Page from '@/pages/EmploymentV2'
 import StatisticsPage from '@/pages/Statistics'
+import UsersPage from '@/pages/Users'
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
   const { isLoggedIn } = useAuthStore()
@@ -38,6 +39,7 @@ export function AppRoutes() {
         <Route path="employment" element={<EmploymentPage />} />
         <Route path="employment-v2" element={<EmploymentV2Page />} />
         <Route path="statistics" element={<StatisticsPage />} />
+        <Route path="users" element={<UsersPage />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

@@ -10,6 +10,7 @@ from app.api import (
     statistics_router,
     students_router,
     teachers_router,
+    users_router,
 )
 from app.core.config import settings
 from app.core.database import init_db
@@ -32,6 +33,7 @@ app.include_router(employment_router)
 app.include_router(employment_v2_router, prefix='/v2')
 app.include_router(statistics_router)
 app.include_router(teachers_router)
+app.include_router(users_router)
 
 
 @app.get('/')

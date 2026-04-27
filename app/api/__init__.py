@@ -6,6 +6,7 @@ from app.api.scores import router as scores_router
 from app.api.statistics import router as statistics_router
 from app.api.students import router as students_router
 from app.api.teachers import router as teachers_router
+from app.api.users import router as users_router
 
 __all__ = [
     'auth_router',
@@ -16,4 +17,5 @@ __all__ = [
     'statistics_router',
     'students_router',
     'teachers_router',
+    'users_router',
 ]
