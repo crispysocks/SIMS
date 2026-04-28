@@ -74,7 +74,7 @@ def get_class_list(
 # 2. 新增班级
 # ============================================================
 
-@router.post('', summary='新增班级', status_code=status.HTTP_201_CREATED)
+@router.post('', summary='新增班级')
 def create_class(
     data: ClassCreate,
     db: Session = Depends(get_db),

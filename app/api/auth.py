@@ -37,7 +37,7 @@ router = APIRouter(prefix='/auth', tags=['认证'])
 # 注册接口
 # ============================================================
 
-@router.post('/register', status_code=status.HTTP_201_CREATED)
+@router.post('/register')
 def register(data: UserCreate, db: Session = Depends(get_db)) -> ApiResponse[TokenResponse]:
     """
     用户注册接口。

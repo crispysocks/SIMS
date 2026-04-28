@@ -43,7 +43,7 @@ router = APIRouter(
 # 1. 录入学生成绩
 # ============================================================
 
-@router.post('/', status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_role(['admin', 'teacher']))])
+@router.post('/', dependencies=[Depends(require_role(['admin', 'teacher']))])
 def create_score(
     data: ScoreCreate,
     db: Session = Depends(get_db),

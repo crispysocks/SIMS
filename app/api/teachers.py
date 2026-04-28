@@ -58,7 +58,6 @@ def list_teachers(db: Session = Depends(get_db)) -> ApiResponse[list[TeacherRead
 
 @router.post(
     '',
-    status_code=status.HTTP_201_CREATED,
     summary='创建教师',
     dependencies=[Depends(require_role(['admin']))],
 )
