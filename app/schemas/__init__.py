@@ -25,7 +25,7 @@ from app.schemas.employment import (
     EmploymentRead,
     EmploymentUpdate,
 )
-from app.schemas.score import ScoreCreate, ScoreDelete, ScoreRead, ScoreUpdate
+from app.schemas.score import ScoreCreate, ScoreRead, ScoreUpdate
 from app.schemas.student import StudentCreate, StudentUpdate
 from app.schemas.teacher import TeacherCreate, TeacherRead, TeacherUpdate
 
@@ -39,7 +39,7 @@ __all__ = [
     'EmploymentRead',
     'EmploymentUpdate',
     'ScoreCreate',
-    'ScoreDelete',
+
     'ScoreRead',
     'ScoreUpdate',
     'StudentCreate',

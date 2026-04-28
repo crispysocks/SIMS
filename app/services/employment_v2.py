@@ -197,6 +197,7 @@ def find_list_emp(db: Session, class_no: str):
             'position': emp.position,
             'work_location': emp.work_location,
             'employment_status': emp.employment_status,
+            'isdeleted': emp.isdeleted,
         }
         for emp, stu in re
     ]

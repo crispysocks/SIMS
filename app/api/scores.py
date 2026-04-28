@@ -26,7 +26,6 @@ from app.schemas.score import (
     ClassScoreReportItem,
     ExamRankingItem,
     ScoreCreate,
-    ScoreDelete,
     ScoreRead,
     ScoreUpdate,
 )
@@ -96,28 +95,30 @@ def update_score(
 # 3. 删除成绩（逻辑删除）
 # ============================================================
 
-@router.post('/delete', dependencies=[Depends(require_role(['admin']))])
+@router.delete('/{student_no}/{exam_no}', dependencies=[Depends(require_role(['admin']))])
 def delete_score(
-    data: ScoreDelete,
+    student_no: str,
+    exam_no: int,
     db: Session = Depends(get_db),
 ) -> ApiResponse[None]:
     """
     逻辑删除指定学生某次考试的成绩。
 
-    访问地址：POST /scores/delete
+    访问地址：DELETE /scores/{student_no}/{exam_no}
     权限：仅管理员可操作
 
     什么是逻辑删除？
         不是真的删掉，而是标记为"已删除"，以后还能恢复。
 
     参数：
-        data: 包含学生编号和考试序次，用来定位要删除的成绩
+        student_no: 学生编号
+        exam_no: 考试序次
         db: 数据库连接
 
     返回值：
         删除成功的提示
     """
-    score_service.delete_score(db, data.student_no, data.exam_no)
+    score_service.delete_score(db, student_no, exam_no)
     return ApiResponse(message='删除成功', data=None)
 
 

@@ -15,11 +15,9 @@ export interface ClassCountResponse {
 }
 
 export const classApi = {
-  // 1. 分页+模糊查询班级列表（原 getAll 改为分页查询）
-  getList: (skip: number, limit: number, className?: string) =>
-    apiClient.get<ClassListResponse>(
-      `/classes?skip=${skip}&limit=${limit}${className ? `&class_name=${encodeURIComponent(className)}` : ''}`
-    ),
+  // 1. 分页查询班级列表（原 getAll 改为分页查询）
+  getList: (skip: number, limit: number) =>
+    apiClient.get<ClassListResponse>(`/classes?skip=${skip}&limit=${limit}`),
 
   // 2. 根据编号查询单个班级（原 getById，路径不变）
   getById: (classNo: string) => apiClient.get<ClassInfo>(`/classes/${classNo}`),

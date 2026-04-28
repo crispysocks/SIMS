@@ -19,7 +19,6 @@ export default function ClassesPage() {
   const { user } = useAuthStore()
   const { addToast } = useToast()
 
-  const [searchName, setSearchName] = useState('')
   const [searchNo, setSearchNo] = useState('')
   const [selectedClasses, setSelectedClasses] = useState<string[]>([])
 
@@ -27,17 +26,10 @@ export default function ClassesPage() {
   const [editing, setEditing] = useState<ClassInfo | null>(null)
   const [formData, setFormData] = useState<Partial<ClassInfo>>({})
 
-  // 1. 分页查询班级列表（适配新 API：GET /classes?skip&limit&class_name）
+  // 1. 分页查询班级列表（适配新 API：GET /classes?skip&limit）
   const { data: classListData, isLoading } = useQuery({
-    queryKey: ['classes', 'list', 0, 100, ''],
+    queryKey: ['classes', 'list', 0, 100],
     queryFn: () => classApi.getList(0, 100).then((r) => r.data),
-  })
-
-  // 按名称搜索（复用 getList，传入 class_name 参数）
-  const { data: searchedByName } = useQuery({
-    queryKey: ['classes', 'list', 0, 100, searchName],
-    queryFn: () => classApi.getList(0, 100, searchName).then((r) => r.data),
-    enabled: searchName.trim().length > 0,
   })
 
   // 按编号搜索（复用 getById）
@@ -95,8 +87,6 @@ export default function ClassesPage() {
   let displayData = classListData
   if (searchNo.trim().length > 0) {
     displayData = searchedByNo
-  } else if (searchName.trim().length > 0) {
-    displayData = searchedByName
   }
 
   const displayClasses = displayData?.classes
@@ -172,22 +162,7 @@ export default function ClassesPage() {
           <Input
             placeholder="搜索班级编号..."
             value={searchNo}
-            onChange={(e) => {
-              setSearchNo(e.target.value)
-              if (e.target.value.trim().length > 0) setSearchName('')
-            }}
-            className="pl-9"
-          />
-        </div>
-        <div className="relative flex-1 max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="搜索班级名称..."
-            value={searchName}
-            onChange={(e) => {
-              setSearchName(e.target.value)
-              if (e.target.value.trim().length > 0) setSearchNo('')
-            }}
+            onChange={(e) => setSearchNo(e.target.value)}
             className="pl-9"
           />
         </div>

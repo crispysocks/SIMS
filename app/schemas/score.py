@@ -6,7 +6,6 @@
 # 包含的 Schema：
 #   - ScoreCreate: 录入成绩时的校验规则
 #   - ScoreUpdate: 修改成绩时的校验规则
-#   - ScoreDelete: 删除成绩时的请求模型
 #   - ScoreRead: 返回成绩时的数据格式
 #   - ExamRankingItem: 单次考试排名项
 #   - ClassScoreReportItem: 班级成绩报表项
@@ -45,17 +44,6 @@ class ScoreUpdate(BaseModel):
     exam_no: int = Field(..., ge=1, description='考核序次')
     score: int = Field(..., ge=0, le=100, description='成绩')
     exam_date: date | None = Field(None, description='考核日期')
-
-
-class ScoreDelete(BaseModel):
-    """
-    成绩删除请求模型。
-
-    只需要学生编号和考试序次，就能定位到要删除的成绩记录。
-    """
-
-    student_no: str = Field(..., max_length=20, description='学生编号')
-    exam_no: int = Field(..., ge=1, description='考核序次')
 
 
 class ScoreRead(BaseModel):

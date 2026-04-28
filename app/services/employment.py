@@ -75,16 +75,26 @@ def create_employment(
 
     步骤：
         1. 检查学生是否存在
-        2. 检查该学生是否已有就业信息
-        3. 新建就业记录
+        2. 检查该学生是否已有未删除的就业信息
+        3. 如果已有已删除的记录 → 恢复并更新
+        4. 如果没有记录 → 新建就业记录
     """
     student = db.query(Student).filter(Student.student_no == student_no, Student.isdeleted == 0).first()
     if not student:
         raise HTTPException(status_code=404, detail='学生不存在')
 
-    existing = db.query(Employment).filter(Employment.student_no == student_no, Employment.isdeleted == 0).first()
+    existing = db.query(Employment).filter(Employment.student_no == student_no).first()
     if existing:
-        raise HTTPException(status_code=409, detail='该学生就业信息已存在')
+        if existing.isdeleted == 0:
+            raise HTTPException(status_code=409, detail='该学生就业信息已存在')
+
+        # 恢复已删除的记录并更新字段
+        existing.isdeleted = 0
+        for key, value in data.model_dump().items():
+            setattr(existing, key, value)
+        db.commit()
+        db.refresh(existing)
+        return EmploymentRead.model_validate(existing)
 
     employment = Employment(
         student_no=student_no,

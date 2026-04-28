@@ -84,7 +84,7 @@ export default function ScoresPage() {
   })
 
   const deleteMutation = useMutation({
-    mutationFn: (data: { student_no: string; exam_no: string }) => scoreApi.delete(data),
+    mutationFn: (data: { student_no: string; exam_no: number }) => scoreApi.delete(data.student_no, data.exam_no),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['scores'] })
       addToast({ title: '成功', description: '成绩已删除' })

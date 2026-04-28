@@ -23,8 +23,8 @@ from app.models.classes import ClassInfo
 from app.schemas.classes import ClassCreate, ClassUpdate
 
 
-# ---------- 1. 获取班级列表（支持分页和模糊查询） ----------
-def get_class_list(db: Session, skip: int, limit: int, class_name: str | None = None):
+# ---------- 1. 获取班级列表（支持分页） ----------
+def get_class_list(db: Session, skip: int, limit: int):
     """
     获取班级列表。
 
@@ -32,18 +32,12 @@ def get_class_list(db: Session, skip: int, limit: int, class_name: str | None = 
         db: 数据库会话
         skip: 跳过多少条记录（分页用）
         limit: 返回多少条记录（分页用）
-        class_name: 班级名称关键字（模糊查询用，可选）
 
     返回值：
         (班级列表, 总数量)
     """
     # 先查询所有未删除的班级
     query = db.query(ClassInfo).filter(ClassInfo.isdeleted == 0)
-
-    # 如果传了 class_name，就加上模糊查询条件
-    # contains 表示"包含"，如查询"Python"会匹配"Python基础班"
-    if class_name:
-        query = query.filter(ClassInfo.class_name.contains(class_name))
 
     # count() 查询总数量（不受分页影响）
     total = query.count()

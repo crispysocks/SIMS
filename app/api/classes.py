@@ -43,25 +43,23 @@ router = APIRouter(
 def get_class_list(
     skip: int = Query(0),           # 跳过多少条，从第几条开始查
     limit: int = Query(10),         # 最多返回多少条
-    class_name: Optional[str] = None,  # 可选的班级名称模糊搜索关键字
     db: Session = Depends(get_db),
 ):
     """
-    分页查询班级列表，支持按班级名称模糊搜索。
+    分页查询班级列表。
 
-    访问地址：GET /classes?skip=0&limit=10&class_name=一班
+    访问地址：GET /classes?skip=0&limit=10
 
     参数：
         skip: 跳过前面多少条记录（用于翻页）
         limit: 这一页最多显示多少条
-        class_name: 班级名称关键字，不传就查全部
         db: 数据库连接
 
     返回值：
         { classes: 班级列表, total: 总数量 }
     """
     # 调用 service 层的函数去查数据库
-    classes, total = class_service.get_class_list(db, skip, limit, class_name)
+    classes, total = class_service.get_class_list(db, skip, limit)
 
     # 把数据库模型转换成前端需要的格式（Pydantic 模型）
     # model_validate 是 Pydantic v2 的方法，用来把 ORM 对象转成字典-like 的对象
