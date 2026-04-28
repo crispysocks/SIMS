@@ -60,14 +60,14 @@ export interface Employment {
 
 export interface EmploymentV2 {
   student_no: string
-  employment_status: number
+  employment_status: string
   employment_open_time: string
   offer_time: string
-  company: string
+  company_name: string
   salary: number
   position: string
   work_location: string
-  is_deleted: boolean
+  isdeleted: number
 }
 
 export interface User {

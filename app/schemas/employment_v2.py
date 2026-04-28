@@ -41,6 +41,7 @@ class EmploymentOut(BaseModel):
     position: Optional[str]
     work_location: Optional[str]
     employment_status: str
+    isdeleted: int
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -70,5 +71,6 @@ class EmploymentSearchResponse(BaseModel):
     position: Optional[str] = None
     work_location: Optional[str] = None
     employment_status: Optional[str] = None
+    isdeleted: int = 0
 
     model_config = ConfigDict(from_attributes=True)

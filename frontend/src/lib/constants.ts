@@ -19,7 +19,8 @@ export const GENDER_MAP: Record<string, string> = {
   'other': '其他',
 }
 
-export const EMPLOYMENT_STATUS_MAP: Record<number, string> = {
-  0: '已删除',
-  1: '正常',
+export const EMPLOYMENT_STATUS_MAP: Record<string, string> = {
+  '待业': '待业',
+  '在聘': '在聘',
+  '已离职': '已离职',
 }

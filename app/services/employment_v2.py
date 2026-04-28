@@ -115,20 +115,7 @@ def find_emp(db: Session, student_no: str):
         )
         .first()
     )
-    if re is None:
-        return None
-
-    data = {
-        'student_no': re.student_no,
-        'employment_open_time': re.employment_open_time,
-        'offer_time': re.offer_time,
-        'company_name': re.company_name,
-        'salary': re.salary,
-        'position': re.position,
-        'work_location': re.work_location,
-        'employment_status': re.employment_status,
-    }
-    return data
+    return re
 
 
 def find_list_emp(db: Session, class_no: str):
@@ -212,13 +199,14 @@ def search_emp_list(db: Session, query: EmploymentQuery):
     re = (
         db.query(Employment, Student.name, Student.class_no)
         .join(Student, Employment.student_no == Student.student_no)
+        .filter(Student.isdeleted == 0)
     )
 
-    if query.student_no is not None:
+    if query.student_no:
         re = re.filter(Employment.student_no == query.student_no)
 
-    if query.company_name is not None:
-        re = re.filter(Employment.company_name == query.company_name)
+    if query.company_name:
+        re = re.filter(Employment.company_name.like(f'%{query.company_name}%'))
 
     if query.min_salary is not None:
         re = re.filter(Employment.salary >= query.min_salary)
@@ -226,14 +214,14 @@ def search_emp_list(db: Session, query: EmploymentQuery):
     if query.max_salary is not None:
         re = re.filter(Employment.salary <= query.max_salary)
 
-    if query.employment_status is not None:
+    if query.employment_status:
         re = re.filter(Employment.employment_status == query.employment_status)
 
-    if query.position is not None:
-        re = re.filter(Employment.position == query.position)
+    if query.position:
+        re = re.filter(Employment.position.like(f'%{query.position}%'))
 
-    if query.work_location is not None:
-        re = re.filter(Employment.work_location == query.work_location)
+    if query.work_location:
+        re = re.filter(Employment.work_location.like(f'%{query.work_location}%'))
 
     results = re.filter(Employment.isdeleted == 0).all()
 
@@ -249,6 +237,7 @@ def search_emp_list(db: Session, query: EmploymentQuery):
             position=emp.position,
             work_location=emp.work_location,
             employment_status=emp.employment_status or '待业',
+            isdeleted=emp.isdeleted,
         )
         for emp, student_name, class_no in results
     ]

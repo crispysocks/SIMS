@@ -9,7 +9,7 @@ class Employment(Base):
     __tablename__ = 'employment'
 
     student_no = Column(String(20), ForeignKey('students.student_no', ondelete='CASCADE'), primary_key=True, comment='学生编号')
-    employment_status = Column(Enum('待业', '在聘', '已离职'), default='待业', comment='就业状态')
+    employment_status = Column(Enum('待业', '在聘', '已离职'), default='在聘', comment='就业状态')
     employment_open_time = Column(DateTime, comment='就业开放时间')
     offer_time = Column(DateTime, comment='offer下发时间')
     company_name = Column(String(100), comment='就业公司名称')
