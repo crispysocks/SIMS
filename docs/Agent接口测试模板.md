@@ -1,12 +1,13 @@
 # Agent 接口测试模板
 
 > 本文档用于测试 SIMS 系统为 Agent 提供的两个专用 HTTP 接口：
+>
 > 1. `POST /agent/sql/query` — SQL 查询接口
 > 2. `POST /agent/save` — 数据保存接口（支持 sql/data → xlsx/db 四种组合）
 >
 > 测试数据来源：`resources/agent-import-sample.json`
 
----
+***
 
 ## 前置准备
 
@@ -36,34 +37,17 @@ $token = ($loginResponse.Content | ConvertFrom-Json).data.access_token
 Write-Host "Token: $token"
 ```
 
-**Python 示例：**
-
-```python
-import urllib.request, json
-
-req = urllib.request.Request(
-    'http://localhost:8000/auth/login',
-    data=json.dumps({"username": "admin", "password": "123456"}).encode('utf-8'),
-    headers={"Content-Type": "application/json"},
-    method='POST'
-)
-resp = urllib.request.urlopen(req)
-data = json.loads(resp.read().decode('utf-8'))
-token = data['data']['access_token']
-print(f"Token: {token}")
-```
-
----
+***
 
 ## 一、SQL 查询接口测试
 
 ### 接口信息
 
-| 项目 | 内容 |
-|------|------|
-| 端点 | `POST /agent/sql/query` |
-| 认证 | `Authorization: Bearer <token>` |
-| Content-Type | `application/json` |
+| 项目           | 内容                              |
+| ------------ | ------------------------------- |
+| 端点           | `POST /agent/sql/query`         |
+| 认证           | `Authorization: Bearer <token>` |
+| Content-Type | `application/json`              |
 
 ### 请求体模板
 
@@ -151,26 +135,24 @@ Invoke-WebRequest -Uri http://localhost:8000/agent/sql/query `
 
 > 预期结果：`仅允许执行SELECT查询语句`
 
----
+***
 
 ## 二、数据保存接口测试
 
 ### 接口信息
 
-| 项目 | 内容 |
-|------|------|
-| 端点 | `POST /agent/save` |
-| 认证 | `Authorization: Bearer <token>` |
-| Content-Type | `application/json` |
+| 项目           | 内容                              |
+| ------------ | ------------------------------- |
+| 端点           | `POST /agent/save`              |
+| 认证           | `Authorization: Bearer <token>` |
+| Content-Type | `application/json`              |
 
 ### 支持的数据来源与保存目标组合
 
-| source_type | target_type | 说明 |
-|-------------|-------------|------|
-| `sql` | `xlsx` | SQL 查询结果导出为 Excel |
-| `sql` | `db` | SQL 查询结果写入数据库表 |
-| `data` | `xlsx` | JSON 数据导出为 Excel |
-| `data` | `db` | JSON 数据写入数据库表 |
+| source\_type | target\_type | 说明                |
+| ------------ | ------------ | ----------------- |
+| `sql`        | `xlsx`       | SQL 查询结果导出为 Excel |
+| `data`       | `db`         | JSON 数据写入数据库表     |
 
 ### 测试用例 A：SQL → xlsx（导出学生数据到 Excel）
 
@@ -191,49 +173,9 @@ Invoke-WebRequest -Uri http://localhost:8000/agent/save `
 
 > 注意：确保 `./exports/` 目录存在，否则提前创建 `mkdir -p ./exports`
 
-### 测试用例 B：SQL → db（查询结果写入临时表）
+### 测试用例 B：data → db（JSON 数据写入数据库表）
 
-```powershell
-$saveBody = @{
-  source_type = "sql"
-  sql = "SELECT student_no, name, gender, class_no FROM students WHERE isdeleted = 0 LIMIT 5"
-  target_type = "db"
-  table_name = "temp_students"
-} | ConvertTo-Json
-
-Invoke-WebRequest -Uri http://localhost:8000/agent/save `
-  -Method POST `
-  -Headers @{"Content-Type"="application/json"; "Authorization"="Bearer $token"} `
-  -Body $saveBody `
-  -UseBasicParsing
-```
-
-> 注意：目标表 `temp_students` 需已存在且字段类型匹配；写入模式为 `append`
-
-### 测试用例 C：data → xlsx（JSON 数据导出为 Excel）
-
-使用 `resources/agent-import-sample.json` 中的学生数据：
-
-```powershell
-$jsonData = Get-Content -Raw -Path "resources/agent-import-sample.json" | ConvertFrom-Json
-
-$saveBody = @{
-  source_type = "data"
-  data = $jsonData.students
-  target_type = "xlsx"
-  file_path = "./exports/agent_import_students.xlsx"
-} | ConvertTo-Json -Depth 10
-
-Invoke-WebRequest -Uri http://localhost:8000/agent/save `
-  -Method POST `
-  -Headers @{"Content-Type"="application/json"; "Authorization"="Bearer $token"} `
-  -Body $saveBody `
-  -UseBasicParsing
-```
-
-### 测试用例 D：data → db（JSON 数据写入数据库表）
-
-#### D1. 导入学生数据到临时表
+#### B1. 导入学生数据到临时表
 
 ```powershell
 $jsonData = Get-Content -Raw -Path "resources/agent-import-sample.json" | ConvertFrom-Json
@@ -252,7 +194,7 @@ Invoke-WebRequest -Uri http://localhost:8000/agent/save `
   -UseBasicParsing
 ```
 
-#### D2. 导入成绩数据到临时表
+#### B2. 导入成绩数据到临时表
 
 ```powershell
 $jsonData = Get-Content -Raw -Path "resources/agent-import-sample.json" | ConvertFrom-Json
@@ -271,7 +213,7 @@ Invoke-WebRequest -Uri http://localhost:8000/agent/save `
   -UseBasicParsing
 ```
 
-#### D3. 导入就业数据到临时表
+#### B3. 导入就业数据到临时表
 
 ```powershell
 $jsonData = Get-Content -Raw -Path "resources/agent-import-sample.json" | ConvertFrom-Json
@@ -290,7 +232,7 @@ Invoke-WebRequest -Uri http://localhost:8000/agent/save `
   -UseBasicParsing
 ```
 
----
+***
 
 ## 三、agent-import-sample.json 数据结构说明
 
@@ -298,146 +240,53 @@ Invoke-WebRequest -Uri http://localhost:8000/agent/save `
 
 ### 根对象字段
 
-| 字段名 | 类型 | 说明 |
-|--------|------|------|
-| `description` | string | 文件描述 |
-| `students` | array | 学生数据数组 |
-| `scores` | array | 成绩数据数组 |
-| `employment` | array | 就业数据数组 |
+| 字段名           | 类型     | 说明     |
+| ------------- | ------ | ------ |
+| `description` | string | 文件描述   |
+| `students`    | array  | 学生数据数组 |
+| `scores`      | array  | 成绩数据数组 |
+| `employment`  | array  | 就业数据数组 |
 
 ### students 数组字段
 
-| 字段名 | 类型 | 说明 |
-|--------|------|------|
-| `student_no` | string | 学生编号（主键） |
-| `name` | string | 学生姓名 |
-| `gender` | string | 性别（男/女） |
-| `class_no` | string | 班级编号（外键 → classes.class_no） |
-| `age` | int | 年龄 |
-| `phone` | string | 联系电话 |
-| `education` | string | 学历（专科/本科/硕士） |
-| `entrance_time` | string | 入学时间（YYYY-MM-DD） |
-| `graduate_time` | string | 毕业时间（YYYY-MM-DD） |
+| 字段名             | 类型     | 说明                           |
+| --------------- | ------ | ---------------------------- |
+| `student_no`    | string | 学生编号（主键）                     |
+| `name`          | string | 学生姓名                         |
+| `gender`        | string | 性别（男/女）                      |
+| `class_no`      | string | 班级编号（外键 → classes.class\_no） |
+| `age`           | int    | 年龄                           |
+| `phone`         | string | 联系电话                         |
+| `education`     | string | 学历（专科/本科/硕士）                 |
+| `entrance_time` | string | 入学时间（YYYY-MM-DD）             |
+| `graduate_time` | string | 毕业时间（YYYY-MM-DD）             |
 
 ### scores 数组字段
 
-| 字段名 | 类型 | 说明 |
-|--------|------|------|
-| `student_no` | string | 学生编号（外键 → students.student_no） |
-| `exam_no` | int | 考核序次（联合主键之一） |
-| `exam_name` | string | 考核名称（注意：数据库 scores 表无此字段，仅作标识） |
-| `score` | int | 成绩分数 |
-| `exam_date` | string | 考核日期（YYYY-MM-DD） |
+| 字段名          | 类型     | 说明                              |
+| ------------ | ------ | ------------------------------- |
+| `student_no` | string | 学生编号（外键 → students.student\_no） |
+| `exam_no`    | int    | 考核序次（联合主键之一）                    |
+| `exam_name`  | string | 考核名称（注意：数据库 scores 表无此字段，仅作标识）  |
+| `score`      | int    | 成绩分数                            |
+| `exam_date`  | string | 考核日期（YYYY-MM-DD）                |
 
 ### employment 数组字段
 
-| 字段名 | 类型 | 说明 |
-|--------|------|------|
-| `student_no` | string | 学生编号（主键/外键 → students.student_no） |
-| `employment_status` | string | 就业状态（待业/在聘/已离职） |
-| `company_name` | string | 公司名称 |
-| `salary` | int | 薪资 |
-| `position` | string | 工作岗位 |
-| `work_location` | string | 工作地点 |
-| `offer_time` | string | Offer 下发时间（YYYY-MM-DD） |
-| `employment_open_time` | string | 就业开放时间（YYYY-MM-DD） |
+| 字段名                    | 类型     | 说明                                 |
+| ---------------------- | ------ | ---------------------------------- |
+| `student_no`           | string | 学生编号（主键/外键 → students.student\_no） |
+| `employment_status`    | string | 就业状态（待业/在聘/已离职）                    |
+| `company_name`         | string | 公司名称                               |
+| `salary`               | int    | 薪资                                 |
+| `position`             | string | 工作岗位                               |
+| `work_location`        | string | 工作地点                               |
+| `offer_time`           | string | Offer 下发时间（YYYY-MM-DD）             |
+| `employment_open_time` | string | 就业开放时间（YYYY-MM-DD）                 |
 
----
+***
 
-## 四、Python 完整测试脚本
-
-以下脚本使用标准库 `urllib.request`，无需额外安装依赖：
-
-```python
-import urllib.request
-import json
-
-BASE_URL = "http://localhost:8000"
-USERNAME = "admin"
-PASSWORD = "123456"
-
-def get_token():
-    req = urllib.request.Request(
-        f"{BASE_URL}/auth/login",
-        data=json.dumps({"username": USERNAME, "password": PASSWORD}).encode("utf-8"),
-        headers={"Content-Type": "application/json"},
-        method="POST",
-    )
-    resp = urllib.request.urlopen(req)
-    data = json.loads(resp.read().decode("utf-8"))
-    return data["data"]["access_token"]
-
-def sql_query(token, sql, params=None):
-    body = {"sql": sql, "params": params}
-    req = urllib.request.Request(
-        f"{BASE_URL}/agent/sql/query",
-        data=json.dumps(body).encode("utf-8"),
-        headers={"Content-Type": "application/json", "Authorization": f"Bearer {token}"},
-        method="POST",
-    )
-    resp = urllib.request.urlopen(req)
-    return json.loads(resp.read().decode("utf-8"))
-
-def save_data(token, payload):
-    req = urllib.request.Request(
-        f"{BASE_URL}/agent/save",
-        data=json.dumps(payload).encode("utf-8"),
-        headers={"Content-Type": "application/json", "Authorization": f"Bearer {token}"},
-        method="POST",
-    )
-    resp = urllib.request.urlopen(req)
-    return json.loads(resp.read().decode("utf-8"))
-
-def load_sample_data():
-    with open("resources/agent-import-sample.json", "r", encoding="utf-8") as f:
-        return json.load(f)
-
-if __name__ == "__main__":
-    token = get_token()
-    print(f"获取 Token 成功: {token[:20]}...")
-
-    # 1. SQL 查询测试
-    print("\n=== 测试 SQL 查询 ===")
-    result = sql_query(token, "SELECT student_no, name, gender FROM students WHERE isdeleted = 0 LIMIT 5")
-    print(json.dumps(result, ensure_ascii=False, indent=2))
-
-    # 2. SQL → xlsx
-    print("\n=== 测试 SQL → xlsx ===")
-    result = save_data(token, {
-        "source_type": "sql",
-        "sql": "SELECT * FROM students WHERE isdeleted = 0 LIMIT 10",
-        "target_type": "xlsx",
-        "file_path": "./exports/test_sql_to_xlsx.xlsx",
-    })
-    print(json.dumps(result, ensure_ascii=False, indent=2))
-
-    # 3. data → xlsx（使用 agent-import-sample.json）
-    print("\n=== 测试 data → xlsx（agent-import-sample）===")
-    sample = load_sample_data()
-    result = save_data(token, {
-        "source_type": "data",
-        "data": sample["students"],
-        "target_type": "xlsx",
-        "file_path": "./exports/test_data_to_xlsx.xlsx",
-    })
-    print(json.dumps(result, ensure_ascii=False, indent=2))
-
-    # 4. data → db（使用 agent-import-sample.json）
-    print("\n=== 测试 data → db（agent-import-sample）===")
-    result = save_data(token, {
-        "source_type": "data",
-        "data": sample["students"],
-        "target_type": "db",
-        "table_name": "temp_agent_students",
-    })
-    print(json.dumps(result, ensure_ascii=False, indent=2))
-
-    print("\n所有测试完成！")
-```
-
----
-
-## 五、常见问题与注意事项
+## 四、常见问题与注意事项
 
 1. **isdeleted 过滤**：所有业务表都有 `isdeleted` 字段（0=正常，1=已删除），查询时务必加上 `WHERE isdeleted = 0`。
 2. **scores 表结构**：数据库中 `scores` 表没有 `exam_name` 字段，只有 `exam_no`（数字序次）和 `exam_date`。
@@ -445,3 +294,4 @@ if __name__ == "__main__":
 4. **xlsx 目录**：保存到 xlsx 前确保目录存在，否则可能报错。
 5. **db 写入模式**：保存到数据库时使用 `if_exists='append'` 模式，目标表需已存在且字段匹配。
 6. **安全限制**：SQL 查询接口仅允许 `SELECT` 语句，禁止 `insert/update/delete/drop` 等关键字。
+

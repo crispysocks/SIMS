@@ -1,5 +1,5 @@
 ---
-name: sims-agent
+name: use-sims
 description: >
   SIMS 学生管理系统的 Agent 专用接口使用指南。
   当用户（Agent）需要通过 SQL 查询系统数据库、或将数据保存到 xlsx/数据库时，必须使用此技能。
@@ -10,6 +10,9 @@ license: MIT
 
 # SIMS Agent 接口使用指南
 
+> 本文档用于指导 Agent 正确调用 SIMS 系统提供的两个专用 HTTP 接口。
+> 测试数据来源：`resources/agent-import-sample.json`
+
 ## 概述
 
 SIMS（学生管理系统）为 Agent 提供了两个专用 HTTP 接口：
@@ -17,18 +20,22 @@ SIMS（学生管理系统）为 Agent 提供了两个专用 HTTP 接口：
 1. **SQL 查询接口** (`POST /agent/sql/query`) — 直接执行 SELECT 查询
 2. **数据保存接口** (`POST /agent/save`) — 将数据保存到 xlsx 文件或数据库表
 
-Agent 接口的权限要求为 `admin` 或 `teacher`，调用接口时需要在请求头中携带真实的 JWT Token（见下方认证说明）。
+Agent 接口的权限要求为 `admin` 或 `teacher`，调用接口时需要在请求头中携带 JWT Token。
 
-## 认证方式
+---
+
+## 前置准备
+
+### 1. 获取 JWT Token
 
 所有 Agent 接口使用 JWT Token 认证（与系统现有认证一致）：
 
 - 先调用 `/auth/login` 获取 token
 - 在请求头中携带 `Authorization: Bearer <token>`
 
-示例 curl（Windows PowerShell）：
+**PowerShell 示例：**
+
 ```powershell
-# 1. 登录获取 token（使用哈希表转 JSON，避免双重转义）
 $loginBody = @{username="admin"; password="123456"} | ConvertTo-Json
 $loginResponse = Invoke-WebRequest -Uri http://localhost:8000/auth/login `
   -Method POST `
@@ -36,9 +43,65 @@ $loginResponse = Invoke-WebRequest -Uri http://localhost:8000/auth/login `
   -Body $loginBody `
   -UseBasicParsing
 $token = ($loginResponse.Content | ConvertFrom-Json).data.access_token
+Write-Host "Token: $token"
+```
 
-# 2. 调用 Agent 接口（请求体也用哈希表转 JSON）
-$queryBody = @{sql="SELECT * FROM students WHERE isdeleted = 0 LIMIT 5"; params=$null} | ConvertTo-Json
+> 注意：PowerShell 终端可能显示中文乱码，这是终端编码问题，接口实际返回的是正确的 UTF-8 编码数据。
+
+---
+
+## 一、SQL 查询接口
+
+### 接口信息
+
+| 项目 | 内容 |
+|------|------|
+| 端点 | `POST /agent/sql/query` |
+| 认证 | `Authorization: Bearer <token>` |
+| Content-Type | `application/json` |
+
+### 请求体模板
+
+```json
+{
+  "sql": "SELECT student_no, name, gender FROM students WHERE isdeleted = 0 LIMIT 10",
+  "params": null
+}
+```
+
+> `params` 为可选字段，用于参数化查询。不传时设为 `null` 或省略即可。
+
+### 安全限制
+
+- 仅允许 `SELECT` 语句
+- 禁止包含以下关键字：`insert`, `update`, `delete`, `drop`, `truncate`, `alter`, `create`, `grant`, `revoke`
+- 安全过滤使用单词边界匹配，字段名如 `isdeleted` 不会被误判
+
+### 响应示例
+
+```json
+{
+  "message": "查询成功",
+  "data": {
+    "columns": ["student_no", "name", "gender"],
+    "rows": [
+      {"student_no": "2021001", "name": "张三", "gender": "男"}
+    ],
+    "row_count": 1
+  }
+}
+```
+
+### 常用查询模板
+
+#### 查询学生列表（含班级名称）
+
+```powershell
+$queryBody = @{
+  sql = "SELECT s.student_no, s.name, s.gender, s.age, c.class_name FROM students s LEFT JOIN classes c ON s.class_no = c.class_no WHERE s.isdeleted = 0 AND c.isdeleted = 0 LIMIT 20"
+  params = $null
+} | ConvertTo-Json
+
 Invoke-WebRequest -Uri http://localhost:8000/agent/sql/query `
   -Method POST `
   -Headers @{"Content-Type"="application/json"; "Authorization"="Bearer $token"} `
@@ -46,9 +109,115 @@ Invoke-WebRequest -Uri http://localhost:8000/agent/sql/query `
   -UseBasicParsing
 ```
 
-> 注意：PowerShell 终端可能显示中文乱码，这是终端编码问题，接口实际返回的是正确的 UTF-8 编码数据。如需确认中文正常，可用 `uv run python` 调用 `urllib.request` 测试。
+#### 查询班级就业统计
 
-## 数据库设计说明
+```powershell
+$queryBody = @{
+  sql = "SELECT c.class_name, COUNT(e.student_no) AS employment_count, AVG(e.salary) AS avg_salary FROM classes c LEFT JOIN students s ON c.class_no = s.class_no AND s.isdeleted = 0 LEFT JOIN employment e ON s.student_no = e.student_no AND e.isdeleted = 0 WHERE c.isdeleted = 0 GROUP BY c.class_no, c.class_name"
+  params = $null
+} | ConvertTo-Json
+
+Invoke-WebRequest -Uri http://localhost:8000/agent/sql/query `
+  -Method POST `
+  -Headers @{"Content-Type"="application/json"; "Authorization"="Bearer $token"} `
+  -Body $queryBody `
+  -UseBasicParsing
+```
+
+#### 查询学生成绩
+
+```powershell
+$queryBody = @{
+  sql = "SELECT s.student_no, s.name, sc.exam_no, sc.score, sc.exam_date FROM students s JOIN scores sc ON s.student_no = sc.student_no WHERE s.isdeleted = 0 AND sc.isdeleted = 0 ORDER BY s.student_no, sc.exam_date"
+  params = $null
+} | ConvertTo-Json
+
+Invoke-WebRequest -Uri http://localhost:8000/agent/sql/query `
+  -Method POST `
+  -Headers @{"Content-Type"="application/json"; "Authorization"="Bearer $token"} `
+  -Body $queryBody `
+  -UseBasicParsing
+```
+
+#### 参数化查询（按班级查学生）
+
+```powershell
+$queryBody = @{
+  sql = "SELECT student_no, name, gender, age FROM students WHERE class_no = :class_no AND isdeleted = 0"
+  params = @{class_no = "C001"}
+} | ConvertTo-Json
+
+Invoke-WebRequest -Uri http://localhost:8000/agent/sql/query `
+  -Method POST `
+  -Headers @{"Content-Type"="application/json"; "Authorization"="Bearer $token"} `
+  -Body $queryBody `
+  -UseBasicParsing
+```
+
+---
+
+## 二、数据保存接口
+
+### 接口信息
+
+| 项目 | 内容 |
+|------|------|
+| 端点 | `POST /agent/save` |
+| 认证 | `Authorization: Bearer <token>` |
+| Content-Type | `application/json` |
+
+### 支持的数据来源与保存目标组合
+
+| source_type | target_type | 说明 |
+|-------------|-------------|------|
+| `sql` | `xlsx` | SQL 查询结果导出为 Excel 文件 |
+| `data` | `db` | JSON 数据写入数据库表 |
+
+### 示例 A：SQL → xlsx（导出学生数据到 Excel）
+
+```powershell
+$saveBody = @{
+  source_type = "sql"
+  sql = "SELECT student_no, name, gender, class_no, age, phone, education, entrance_time, graduate_time FROM students WHERE isdeleted = 0"
+  target_type = "xlsx"
+  file_path = "./exports/students.xlsx"
+} | ConvertTo-Json
+
+Invoke-WebRequest -Uri http://localhost:8000/agent/save `
+  -Method POST `
+  -Headers @{"Content-Type"="application/json"; "Authorization"="Bearer $token"} `
+  -Body $saveBody `
+  -UseBasicParsing
+```
+
+> 注意：确保 `./exports/` 目录存在，否则提前创建目录。
+
+### 示例 B：data → db（JSON 数据写入数据库表）
+
+使用 `resources/agent-import-sample.json` 中的数据导入数据库：
+
+```powershell
+$jsonData = Get-Content -Raw -Path "resources/agent-import-sample.json" | ConvertFrom-Json
+
+$saveBody = @{
+  source_type = "data"
+  data = $jsonData.students
+  target_type = "db"
+  table_name = "temp_students"
+} | ConvertTo-Json -Depth 10
+
+Invoke-WebRequest -Uri http://localhost:8000/agent/save `
+  -Method POST `
+  -Headers @{"Content-Type"="application/json"; "Authorization"="Bearer $token"} `
+  -Body $saveBody `
+  -UseBasicParsing
+```
+
+> 注意：`data` 字段的值必须是数组（列表），即使只有一条记录也要用 `[{...}]` 格式。保存到数据库时使用 `if_exists='append'` 模式，目标表需已存在且字段类型匹配。
+
+---
+
+## 三、数据库设计说明
 
 ### 核心设计规则
 
@@ -154,161 +323,61 @@ Invoke-WebRequest -Uri http://localhost:8000/agent/sql/query `
 
 > **注意**：`users` 表与学生表/教师表是分开的，没有外键关系。用户是系统登录账号，学生/教师是业务数据。
 
-## 接口 1：SQL 查询
+---
 
-**Endpoint**: `POST /agent/sql/query`
+## 四、agent-import-sample.json 数据结构说明
 
-**请求体**：
-```json
-{
-  "sql": "SELECT student_no, name, gender FROM students WHERE isdeleted = 0 LIMIT 10",
-  "params": null
-}
-```
+文件路径：`resources/agent-import-sample.json`
 
-> `params` 为可选字段，用于参数化查询（如 `"sql": "SELECT * FROM students WHERE class_no = :class_no"`，`"params": {"class_no": "C001"}`）。不传时设为 `null` 或省略即可。
+### 根对象字段
 
-**安全限制**：
-- 仅允许 `SELECT` 语句
-- 禁止包含以下关键字：`insert`, `update`, `delete`, `drop`, `truncate`, `alter`, `create`, `grant`, `revoke`
-- 安全过滤使用单词边界匹配，字段名如 `isdeleted` 不会被误判（已修复）
+| 字段名 | 类型 | 说明 |
+|--------|------|------|
+| `description` | string | 文件描述 |
+| `students` | array | 学生数据数组 |
+| `scores` | array | 成绩数据数组 |
+| `employment` | array | 就业数据数组 |
 
-**响应示例**：
-```json
-{
-  "message": "查询成功",
-  "data": {
-    "columns": ["student_no", "name", "gender"],
-    "rows": [
-      {"student_no": "2021001", "name": "张三", "gender": "男"}
-    ],
-    "row_count": 1
-  }
-}
-```
+### students 数组字段
 
-## 接口 2：保存数据
+| 字段名 | 类型 | 说明 |
+|--------|------|------|
+| `student_no` | string | 学生编号（主键） |
+| `name` | string | 学生姓名 |
+| `gender` | string | 性别（男/女） |
+| `class_no` | string | 班级编号（外键 → classes.class_no） |
+| `age` | int | 年龄 |
+| `phone` | string | 联系电话 |
+| `education` | string | 学历（专科/本科/硕士） |
+| `entrance_time` | string | 入学时间（YYYY-MM-DD） |
+| `graduate_time` | string | 毕业时间（YYYY-MM-DD） |
 
-**Endpoint**: `POST /agent/save`
+### scores 数组字段
 
-支持两种数据来源和两种保存目标，共 4 种组合：
+| 字段名 | 类型 | 说明 |
+|--------|------|------|
+| `student_no` | string | 学生编号（外键 → students.student_no） |
+| `exam_no` | int | 考核序次（联合主键之一） |
+| `exam_name` | string | 考核名称（注意：数据库 scores 表无此字段，仅作标识） |
+| `score` | int | 成绩分数 |
+| `exam_date` | string | 考核日期（YYYY-MM-DD） |
 
-| source_type | target_type | 说明 |
-|-------------|-------------|------|
-| `sql` | `xlsx` | 将 SQL 查询结果导出为 Excel 文件 |
-| `sql` | `db` | 将 SQL 查询结果写入数据库表 |
-| `data` | `xlsx` | 将 JSON 数据导出为 Excel 文件 |
-| `data` | `db` | 将 JSON 数据写入数据库表 |
+### employment 数组字段
 
-### 示例 A：SQL 结果导出为 xlsx
+| 字段名 | 类型 | 说明 |
+|--------|------|------|
+| `student_no` | string | 学生编号（主键/外键 → students.student_no） |
+| `employment_status` | string | 就业状态（待业/在聘/已离职） |
+| `company_name` | string | 公司名称 |
+| `salary` | int | 薪资 |
+| `position` | string | 工作岗位 |
+| `work_location` | string | 工作地点 |
+| `offer_time` | string | Offer 下发时间（YYYY-MM-DD） |
+| `employment_open_time` | string | 就业开放时间（YYYY-MM-DD） |
 
-```json
-{
-  "source_type": "sql",
-  "sql": "SELECT * FROM students WHERE isdeleted = 0",
-  "target_type": "xlsx",
-  "file_path": "./exports/students.xlsx"
-}
-```
+---
 
-### 示例 B：SQL 结果写入数据库表
-
-```json
-{
-  "source_type": "sql",
-  "sql": "SELECT student_no, name FROM students WHERE class_no = 'C001'",
-  "target_type": "db",
-  "table_name": "temp_students"
-}
-```
-
-### 示例 C：JSON 数据导出为 xlsx
-
-```json
-{
-  "source_type": "data",
-  "data": [
-    {"student_no": "2021001", "name": "张三"},
-    {"student_no": "2021002", "name": "李四"}
-  ],
-  "target_type": "xlsx",
-  "file_path": "./exports/new_students.xlsx"
-}
-```
-
-### 示例 D：JSON 数据写入数据库表
-
-```json
-{
-  "source_type": "data",
-  "data": [
-    {"student_no": "2021001", "name": "张三"}
-  ],
-  "target_type": "db",
-  "table_name": "temp_import"
-}
-```
-
-## 测试数据文件
-
-项目 `resources/` 目录下提供了测试数据文件，可用于快速验证 Agent 接口：
-
-- **`resources/template-data.json`** — 系统默认示例数据（教师、班级、学生、成绩、就业）
-- **`resources/agent-import-sample.json`** — 专用于测试 Agent `data -> db/xlsx` 导入功能的示例数据，内含学生、成绩、就业样本及完整接口调用示例
-
-使用示例（从测试文件读取数据导入数据库）：
-```powershell
-$json = Get-Content -Raw -Path resources/agent-import-sample.json | ConvertFrom-Json
-$body = @{
-  source_type = "data"
-  data = $json.students
-  target_type = "db"
-  table_name = "temp_students"
-} | ConvertTo-Json -Depth 10
-
-Invoke-WebRequest -Uri http://localhost:8000/agent/save `
-  -Method POST `
-  -Headers @{"Content-Type"="application/json"; "Authorization"="Bearer $token"} `
-  -Body $body `
-  -UseBasicParsing
-```
-
-> 注意：`data` 字段的值是数组（列表），即使只有一条记录也要用 `[{...}]` 格式。
-
-## 常用查询模板
-
-### 查询学生列表（含班级名称）
-```sql
-SELECT s.student_no, s.name, s.gender, s.age, c.class_name
-FROM students s
-LEFT JOIN classes c ON s.class_no = c.class_no
-WHERE s.isdeleted = 0 AND c.isdeleted = 0
-LIMIT 20;
-```
-
-### 查询班级就业统计
-```sql
-SELECT
-  c.class_name,
-  COUNT(e.student_no) AS employment_count,
-  AVG(e.salary) AS avg_salary
-FROM classes c
-LEFT JOIN students s ON c.class_no = s.class_no AND s.isdeleted = 0
-LEFT JOIN employment e ON s.student_no = e.student_no AND e.isdeleted = 0
-WHERE c.isdeleted = 0
-GROUP BY c.class_no, c.class_name;
-```
-
-### 查询学生成绩
-```sql
-SELECT s.student_no, s.name, sc.exam_no, sc.score, sc.exam_date
-FROM students s
-JOIN scores sc ON s.student_no = sc.student_no
-WHERE s.isdeleted = 0 AND sc.isdeleted = 0
-ORDER BY s.student_no, sc.exam_date;
-```
-
-## 错误处理
+## 五、错误处理
 
 接口返回标准 `ApiResponse` 格式，错误时 `data` 为 `null`，`message` 包含错误详情。常见错误：
 
@@ -318,7 +387,9 @@ ORDER BY s.student_no, sc.exam_date;
 - `保存xlsx失败: ...` — 文件路径无效或磁盘空间不足
 - `写入数据库失败: ...` — 表结构不匹配或数据库错误
 
-## 最佳实践
+---
+
+## 六、最佳实践
 
 1. **始终过滤 isdeleted = 0**，避免查询到已删除的数据。
 2. **使用 LIMIT** 进行大数据量查询，防止返回过多数据。
