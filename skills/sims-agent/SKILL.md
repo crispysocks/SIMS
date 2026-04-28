@@ -43,12 +43,12 @@ Invoke-WebRequest -Uri http://localhost:8000/agent/sql/query `
 
 | 表名 | 主要字段 | 说明 |
 |------|---------|------|
-| `students` | student_no, name, gender, class_no, age, phone, education, entrance_time, graduate_time, isdeleted | 学生信息 |
-| `classes` | class_no, class_name, class_open_time, head_teacher_no, instructor_no, isdeleted | 班级信息 |
-| `teachers` | teacher_no, name, gender, phone, email, subject, isdeleted | 教师信息 |
-| `scores` | student_no, exam_no, exam_name, score, exam_date, isdeleted | 成绩信息 |
-| `employment` | student_no, employment_status, company_name, salary, position, work_location, offer_time, isdeleted | 就业信息 |
-| `users` | username, password_hash, roles, is_active | 系统用户 |
+| `students` | student_no, class_no, name, birth_place, graduate_school, major, entrance_time, graduate_time, education, advisor_name, age, gender, phone, id_card, isdeleted | 学生信息 |
+| `classes` | class_no, class_name, class_open_time, head_teacher_no, instructor_no, description, isdeleted | 班级信息 |
+| `teachers` | teacher_no, name, gender, phone, email, id_card, birthday, hire_date, subject, isdeleted | 教师信息 |
+| `scores` | student_no, exam_no, score, exam_date, isdeleted | 成绩信息（联合主键：student_no + exam_no） |
+| `employment` | student_no, employment_status, employment_open_time, offer_time, company_name, salary, position, work_location, isdeleted | 就业信息 |
+| `users` | id, username, password_hash, roles, is_active, created_at | 系统用户 |
 
 > 注意：所有业务表都有 `isdeleted` 字段（0=正常，1=已删除），查询时建议加上 `WHERE isdeleted = 0`。
 
@@ -143,6 +143,30 @@ Invoke-WebRequest -Uri http://localhost:8000/agent/sql/query `
   "target_type": "db",
   "table_name": "temp_import"
 }
+```
+
+## 测试数据文件
+
+项目 `resources/` 目录下提供了测试数据文件，可用于快速验证 Agent 接口：
+
+- **`resources/template-data.json`** — 系统默认示例数据（教师、班级、学生、成绩、就业）
+- **`resources/agent-import-sample.json`** — 专用于测试 Agent `data -> db/xlsx` 导入功能的示例数据，内含学生、成绩、就业样本及完整接口调用示例
+
+使用示例（从测试文件读取数据导入数据库）：
+```powershell
+$json = Get-Content -Raw -Path resources/agent-import-sample.json | ConvertFrom-Json
+$body = @{
+  source_type = "data"
+  data = $json.students
+  target_type = "db"
+  table_name = "temp_students"
+} | ConvertTo-Json -Depth 10
+
+Invoke-WebRequest -Uri http://localhost:8000/agent/save `
+  -Method POST `
+  -Headers @{"Content-Type"="application/json"; "X-User"="agent"; "X-Roles"="teacher"} `
+  -Body $body `
+  -UseBasicParsing
 ```
 
 ## 常用查询模板

@@ -172,7 +172,7 @@ def _load_sample_data() -> None:
         return
 
     # 计算 sample_data.json 的绝对路径
-    data_path = os.path.join(os.path.dirname(__file__), "..", "data", "sample_data.json")
+    data_path = os.path.join(os.path.dirname(__file__), "..", "..", "resources", "template-data.json")
     data_path = os.path.abspath(data_path)
     if not os.path.exists(data_path):
         return

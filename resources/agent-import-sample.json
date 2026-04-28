@@ -1,0 +1,108 @@
+{
+  "description": "Agent 导入数据示例文件，用于测试 POST /agent/save 接口的 data -> db/xlsx 功能",
+  "students": [
+    {
+      "student_no": "AGENT001",
+      "name": "Agent测试学生1",
+      "gender": "男",
+      "class_no": "C001",
+      "age": 21,
+      "phone": "13900139099",
+      "education": "本科",
+      "entrance_time": "2023-09-01",
+      "graduate_time": "2027-07-01"
+    },
+    {
+      "student_no": "AGENT002",
+      "name": "Agent测试学生2",
+      "gender": "女",
+      "class_no": "C002",
+      "age": 20,
+      "phone": "13900139098",
+      "education": "本科",
+      "entrance_time": "2023-09-01",
+      "graduate_time": "2027-07-01"
+    }
+  ],
+  "scores": [
+    {
+      "student_no": "AGENT001",
+      "exam_no": 1,
+      "exam_name": "期中考试",
+      "score": 88,
+      "exam_date": "2024-11-15"
+    },
+    {
+      "student_no": "AGENT002",
+      "exam_no": 1,
+      "exam_name": "期中考试",
+      "score": 92,
+      "exam_date": "2024-11-15"
+    }
+  ],
+  "employment": [
+    {
+      "student_no": "AGENT001",
+      "employment_status": "在聘",
+      "company_name": "示例科技",
+      "salary": 15000,
+      "position": "测试工程师",
+      "work_location": "北京",
+      "offer_time": "2026-06-01",
+      "employment_open_time": "2026-07-01"
+    }
+  ],
+  "usage_examples": {
+    "import_to_db": {
+      "endpoint": "POST /agent/save",
+      "headers": {
+        "X-User": "agent",
+        "X-Roles": "teacher",
+        "Content-Type": "application/json"
+      },
+      "body": {
+        "source_type": "data",
+        "data": [
+          {
+            "student_no": "AGENT001",
+            "name": "Agent测试学生1",
+            "gender": "男",
+            "class_no": "C001",
+            "age": 21,
+            "phone": "13900139099",
+            "education": "本科",
+            "entrance_time": "2023-09-01",
+            "graduate_time": "2027-07-01"
+          }
+        ],
+        "target_type": "db",
+        "table_name": "temp_students"
+      }
+    },
+    "export_to_xlsx": {
+      "endpoint": "POST /agent/save",
+      "headers": {
+        "X-User": "agent",
+        "X-Roles": "teacher",
+        "Content-Type": "application/json"
+      },
+      "body": {
+        "source_type": "data",
+        "data": [
+          {
+            "student_no": "AGENT001",
+            "name": "Agent测试学生1",
+            "gender": "男"
+          },
+          {
+            "student_no": "AGENT002",
+            "name": "Agent测试学生2",
+            "gender": "女"
+          }
+        ],
+        "target_type": "xlsx",
+        "file_path": "./exports/agent_sample.xlsx"
+      }
+    }
+  }
+}
