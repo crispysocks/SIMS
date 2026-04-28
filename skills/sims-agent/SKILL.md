@@ -37,20 +37,111 @@ Invoke-WebRequest -Uri http://localhost:8000/agent/sql/query `
 
 > 注意：PowerShell 终端可能显示中文乱码，这是终端编码问题，接口实际返回的是正确的 UTF-8 编码数据。如需确认中文正常，可用 `uv run python` 调用 `urllib.request` 测试。
 
-## 数据库表结构
+## 数据库设计说明
 
-主要表及字段：
+### 核心设计规则
 
-| 表名 | 主要字段 | 说明 |
-|------|---------|------|
-| `students` | student_no, class_no, name, birth_place, graduate_school, major, entrance_time, graduate_time, education, advisor_name, age, gender, phone, id_card, isdeleted | 学生信息 |
-| `classes` | class_no, class_name, class_open_time, head_teacher_no, instructor_no, description, isdeleted | 班级信息 |
-| `teachers` | teacher_no, name, gender, phone, email, id_card, birthday, hire_date, subject, isdeleted | 教师信息 |
-| `scores` | student_no, exam_no, score, exam_date, isdeleted | 成绩信息（联合主键：student_no + exam_no） |
-| `employment` | student_no, employment_status, employment_open_time, offer_time, company_name, salary, position, work_location, isdeleted | 就业信息 |
-| `users` | id, username, password_hash, roles, is_active, created_at | 系统用户 |
+1. **所有业务表都有 `isdeleted` 字段**（0=正常，1=已删除）。查询时必须加 `WHERE isdeleted = 0`，否则可能查到已删除的数据。
+2. **逻辑删除而非物理删除**。数据不会真正从数据库删除，只是标记为已删除。
+3. **外键约束**：
+   - `students.class_no` -> `classes.class_no`（ondelete=RESTRICT，有学生的班级不能删）
+   - `scores.student_no` -> `students.student_no`（ondelete=CASCADE，学生删除则成绩删除）
+   - `employment.student_no` -> `students.student_no`（ondelete=CASCADE，学生删除则就业记录删除）
+   - `classes.head_teacher_no` -> `teachers.teacher_no`（ondelete=SET NULL）
+   - `classes.instructor_no` -> `teachers.teacher_no`（ondelete=SET NULL）
+4. **联合主键**：`scores` 表使用 `(student_no, exam_no)` 作为联合主键，不是一个独立的 id 字段。
+5. **枚举字段**：部分字段只能取固定值，写入非法值会导致错误。
 
-> 注意：所有业务表都有 `isdeleted` 字段（0=正常，1=已删除），查询时建议加上 `WHERE isdeleted = 0`。
+### 表结构详情
+
+#### `students` — 学生信息表
+
+| 字段名 | 类型 | 约束 | 说明 |
+|--------|------|------|------|
+| student_no | VARCHAR(20) | PRIMARY KEY | 学生编号，主键 |
+| class_no | VARCHAR(20) | NOT NULL, FOREIGN KEY -> classes.class_no | 班级编号 |
+| name | VARCHAR(50) | NOT NULL | 学生姓名 |
+| birth_place | VARCHAR(100) | 可空 | 籍贯 |
+| graduate_school | VARCHAR(100) | 可空 | 毕业院校 |
+| major | VARCHAR(50) | 可空 | 专业 |
+| entrance_time | DATE | NOT NULL | 入学时间 |
+| graduate_time | DATE | 可空 | 毕业时间 |
+| education | ENUM('专科','本科','硕士') | 可空 | 学历 |
+| advisor_name | VARCHAR(50) | 可空 | 顾问姓名 |
+| age | INT | 可空 | 年龄 |
+| gender | ENUM('男','女') | NOT NULL | 性别 |
+| phone | VARCHAR(20) | 可空 | 联系电话 |
+| id_card | VARCHAR(18) | 可空 | 身份证号 |
+| isdeleted | INT | DEFAULT 0 | 逻辑删除标记 |
+
+#### `classes` — 班级信息表
+
+| 字段名 | 类型 | 约束 | 说明 |
+|--------|------|------|------|
+| class_no | VARCHAR(20) | PRIMARY KEY | 班级编号，主键 |
+| class_name | VARCHAR(50) | NOT NULL | 班级名称 |
+| class_open_time | DATE | NOT NULL | 开课时间 |
+| head_teacher_no | VARCHAR(20) | FOREIGN KEY -> teachers.teacher_no, 可空 | 班主任编号 |
+| instructor_no | VARCHAR(20) | FOREIGN KEY -> teachers.teacher_no, 可空 | 授课老师编号 |
+| description | VARCHAR(500) | 可空 | 班级描述 |
+| isdeleted | INT | DEFAULT 0 | 逻辑删除标记 |
+
+#### `teachers` — 教师信息表
+
+| 字段名 | 类型 | 约束 | 说明 |
+|--------|------|------|------|
+| teacher_no | VARCHAR(20) | PRIMARY KEY | 教师编号，主键 |
+| name | VARCHAR(50) | NOT NULL | 教师姓名 |
+| gender | ENUM('男','女') | NOT NULL | 性别 |
+| phone | VARCHAR(20) | 可空 | 联系电话 |
+| email | VARCHAR(100) | 可空 | 电子邮箱 |
+| id_card | VARCHAR(18) | 可空 | 身份证号 |
+| birthday | DATE | 可空 | 出生日期 |
+| hire_date | DATE | 可空 | 入职日期 |
+| subject | VARCHAR(50) | 可空 | 授课科目 |
+| isdeleted | INT | DEFAULT 0 | 逻辑删除标记 |
+
+#### `scores` — 成绩信息表
+
+| 字段名 | 类型 | 约束 | 说明 |
+|--------|------|------|------|
+| student_no | VARCHAR(20) | NOT NULL, FOREIGN KEY -> students.student_no, 联合主键之一 | 学生编号 |
+| exam_no | INT | NOT NULL, 联合主键之一 | 考核序次（第几次考试） |
+| score | INT | NOT NULL | 成绩分数 |
+| exam_date | DATE | 可空 | 考核日期 |
+| isdeleted | INT | DEFAULT 0 | 逻辑删除标记 |
+
+> **重要**：`scores` 没有 `exam_name` 字段！只有 `exam_no`（数字序次）和 `exam_date`。
+> 主键是 `(student_no, exam_no)` 联合主键，不是自增 id。
+
+#### `employment` — 就业信息表
+
+| 字段名 | 类型 | 约束 | 说明 |
+|--------|------|------|------|
+| student_no | VARCHAR(20) | PRIMARY KEY, FOREIGN KEY -> students.student_no | 学生编号，既是主键也是外键 |
+| employment_status | ENUM('待业','在聘','已离职') | DEFAULT '在聘' | 就业状态 |
+| employment_open_time | DATETIME | 可空 | 就业开放时间 |
+| offer_time | DATETIME | 可空 | offer 下发时间 |
+| company_name | VARCHAR(100) | 可空 | 公司名称 |
+| salary | DECIMAL(10,2) | 可空 | 薪资 |
+| position | VARCHAR(50) | 可空 | 工作岗位 |
+| work_location | VARCHAR(100) | 可空 | 工作地点 |
+| isdeleted | INT | DEFAULT 0 | 逻辑删除标记 |
+
+> **重要**：一个学生只能有一条就业记录（`student_no` 是主键）。如果要更新学生就业信息，应该用 UPDATE 而不是 INSERT。
+
+#### `users` — 系统用户表
+
+| 字段名 | 类型 | 约束 | 说明 |
+|--------|------|------|------|
+| id | INT | PRIMARY KEY, AUTO_INCREMENT | 用户ID，自增主键 |
+| username | VARCHAR(50) | NOT NULL, UNIQUE | 登录账号 |
+| password_hash | VARCHAR(128) | NOT NULL | 密码MD5哈希值 |
+| roles | VARCHAR(100) | NOT NULL, DEFAULT 'teacher' | 角色列表，逗号分隔 |
+| is_active | INT | DEFAULT 1, NOT NULL | 账号是否启用（1=启用，0=禁用） |
+| created_at | DATETIME | DEFAULT CURRENT_TIMESTAMP | 创建时间 |
+
+> **注意**：`users` 表与学生表/教师表是分开的，没有外键关系。用户是系统登录账号，学生/教师是业务数据。
 
 ## 接口 1：SQL 查询
 
@@ -176,7 +267,7 @@ Invoke-WebRequest -Uri http://localhost:8000/agent/save `
 SELECT s.student_no, s.name, s.gender, s.age, c.class_name
 FROM students s
 LEFT JOIN classes c ON s.class_no = c.class_no
-WHERE s.isdeleted = 0
+WHERE s.isdeleted = 0 AND c.isdeleted = 0
 LIMIT 20;
 ```
 
@@ -195,7 +286,7 @@ GROUP BY c.class_no, c.class_name;
 
 ### 查询学生成绩
 ```sql
-SELECT s.student_no, s.name, sc.exam_name, sc.score
+SELECT s.student_no, s.name, sc.exam_no, sc.score, sc.exam_date
 FROM students s
 JOIN scores sc ON s.student_no = sc.student_no
 WHERE s.isdeleted = 0 AND sc.isdeleted = 0

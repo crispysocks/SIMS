@@ -51,58 +51,5 @@
       "offer_time": "2026-06-01",
       "employment_open_time": "2026-07-01"
     }
-  ],
-  "usage_examples": {
-    "import_to_db": {
-      "endpoint": "POST /agent/save",
-      "headers": {
-        "X-User": "agent",
-        "X-Roles": "teacher",
-        "Content-Type": "application/json"
-      },
-      "body": {
-        "source_type": "data",
-        "data": [
-          {
-            "student_no": "AGENT001",
-            "name": "Agent测试学生1",
-            "gender": "男",
-            "class_no": "C001",
-            "age": 21,
-            "phone": "13900139099",
-            "education": "本科",
-            "entrance_time": "2023-09-01",
-            "graduate_time": "2027-07-01"
-          }
-        ],
-        "target_type": "db",
-        "table_name": "temp_students"
-      }
-    },
-    "export_to_xlsx": {
-      "endpoint": "POST /agent/save",
-      "headers": {
-        "X-User": "agent",
-        "X-Roles": "teacher",
-        "Content-Type": "application/json"
-      },
-      "body": {
-        "source_type": "data",
-        "data": [
-          {
-            "student_no": "AGENT001",
-            "name": "Agent测试学生1",
-            "gender": "男"
-          },
-          {
-            "student_no": "AGENT002",
-            "name": "Agent测试学生2",
-            "gender": "女"
-          }
-        ],
-        "target_type": "xlsx",
-        "file_path": "./exports/agent_sample.xlsx"
-      }
-    }
-  }
+  ]
 }
