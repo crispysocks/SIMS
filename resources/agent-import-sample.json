@@ -3,7 +3,7 @@
   "students": [
     {
       "student_no": "AGENT001",
-      "name": "Agent测试学生1",
+      "name": "Agent测试学生1,张朝辉",
       "gender": "男",
       "class_no": "C001",
       "age": 21,
@@ -29,7 +29,7 @@
       "student_no": "AGENT001",
       "exam_no": 1,
       "exam_name": "期中考试",
-      "score": 88,
+      "score": 66,
       "exam_date": "2024-11-15"
     },
     {
