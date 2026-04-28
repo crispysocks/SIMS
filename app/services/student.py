@@ -1,210 +1,246 @@
-import os
-import uuid
+# ============================================================
+# services/student.py —— 学生业务逻辑
+# ============================================================
+# 这个文件负责处理"学生"相关的具体业务操作。
+#
+# 包含的功能：
+#   - 检查学生是否存在、检查学生状态
+#   - 获取所有学生、获取单个学生
+#   - 添加学生（支持恢复已删除的记录）
+#   - 更新学生信息
+#   - 删除学生（逻辑删除）、恢复学生
+#   - 按班级查询学生
+#   - 按姓名模糊查询学生
+# ============================================================
 
-from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile, status
-from fastapi.responses import FileResponse
+from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
-from app.database import get_db
-from app.dependencies import get_current_user, require_role
 from app.models.student import Student
-from app.models.user import SysUser
-from app.schemas.student import (
-    StudentCreate,
-    StudentListResponse,
-    StudentResponse,
-    StudentUpdate,
-)
-from app.utils.excel import export_dicts_to_excel, read_excel_to_dicts
-from app.utils.file import save_upload_file
-
-router = APIRouter(prefix="/api/students", tags=["学生管理"])
 
 
-@router.get("/", response_model=StudentListResponse)
-def get_students(
-    page: int = Query(1, ge=1),
-    page_size: int = Query(10, ge=1, le=100),
-    keyword: str = Query(None),
-    current_user: SysUser = Depends(get_current_user),
-    db: Session = Depends(get_db),
-):
-    query = db.query(Student)
+def chick_status(db: Session, new_student_no: str):
+    """
+    检查学生状态。
 
-    if keyword:
-        query = query.filter(
-            (Student.name.contains(keyword)) | (Student.student_no.contains(keyword))
-        )
+    返回值：
+        False: 学生已删除（isdeleted == 1）
+        True: 学生正常（isdeleted == 0）
+    """
+    result = db.query(Student).all()
+    for student in result:
+        if student.student_no == new_student_no:
+            if student.isdeleted == 1:
+                return False
+            else:
+                return True
 
-    total = query.count()
-    items = query.offset((page - 1) * page_size).limit(page_size).all()
 
+def chick_student(db: Session, new_student_no: str):
+    """
+    检查学生是否存在（不管是否已删除）。
+
+    返回值：
+        True: 存在
+        False: 不存在
+    """
+    result = db.query(Student).all()
+    for student in result:
+        if student.student_no == new_student_no:
+            return True
+    return False
+
+
+def get_students_db(db: Session):
+    """
+    获取所有未删除的学生信息。
+
+    注意：这里查询了所有学生再过滤，效率不高，
+    更好的做法是在查询时直接加上 isdeleted == 0 的条件。
+    """
+    list1 = []
+    result = db.query(Student).all()
+    for student in result:
+        bool1 = chick_status(db, student.student_no)
+        if bool1 is True:
+            list1.append(student)
+    return list1
+
+
+def get_student_db(db: Session, student_no: str):
+    """
+    根据学生编号获取单个学生信息（包含已删除的）。
+    """
+    result = db.query(Student).filter(Student.student_no == student_no).first()
+    return result
+
+
+# 已被组长弃用
+def student_response(new_student):
+    """
+    公共响应体函数，返回学生信息（没有状态的信息）。
+
+    这个函数已被弃用，现在直接使用 Pydantic 模型返回。
+    """
+    if new_student is None:
+        return None
     return {
-        "total": total,
-        "items": [StudentResponse.model_validate(s) for s in items],
-        "page": page,
-        "page_size": page_size,
+        'student_no': new_student.student_no,
+        'class_no': new_student.class_no,
+        'name': new_student.name,
+        'birth_place': new_student.birth_place,
+        'graduate_school': new_student.graduate_school,
+        'major': new_student.major,
+        'entrance_time': new_student.entrance_time,
+        'graduate_time': new_student.graduate_time,
+        'education': new_student.education,
+        'advisor_name': new_student.advisor_name,
+        'age': new_student.age,
+        'gender': new_student.gender,
+        'phone': new_student.phone,
+        'id_card': new_student.id_card,
     }
 
 
-@router.get("/{student_id}", response_model=StudentResponse)
-def get_student(
-    student_id: int,
-    current_user: SysUser = Depends(get_current_user),
-    db: Session = Depends(get_db),
-):
-    student = db.query(Student).filter(Student.id == student_id).first()
-    if not student:
-        raise HTTPException(status_code=404, detail="Student not found")
-    return StudentResponse.model_validate(student)
+def add_student_db(db: Session, new_student: Student):
+    """
+    添加单个学生。
 
-
-@router.post("/", response_model=StudentResponse, status_code=status.HTTP_201_CREATED)
-def create_student(
-    data: StudentCreate,
-    current_user: SysUser = Depends(require_role(["admin", "teacher"])),
-    db: Session = Depends(get_db),
-):
-    existing = db.query(Student).filter(Student.student_no == data.student_no).first()
-    if existing:
-        raise HTTPException(status_code=400, detail="Student number already exists")
-
-    student = Student(**data.model_dump())
-    db.add(student)
-    db.commit()
-    db.refresh(student)
-    return StudentResponse.model_validate(student)
-
-
-@router.put("/{student_id}", response_model=StudentResponse)
-def update_student(
-    student_id: int,
-    data: StudentUpdate,
-    current_user: SysUser = Depends(require_role(["admin", "teacher"])),
-    db: Session = Depends(get_db),
-):
-    student = db.query(Student).filter(Student.id == student_id).first()
-    if not student:
-        raise HTTPException(status_code=404, detail="Student not found")
-
-    update_data = data.model_dump(exclude_unset=True)
-    for key, value in update_data.items():
-        setattr(student, key, value)
-
-    db.commit()
-    db.refresh(student)
-    return StudentResponse.model_validate(student)
-
-
-@router.delete("/{student_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_student(
-    student_id: int,
-    current_user: SysUser = Depends(require_role(["admin"])),
-    db: Session = Depends(get_db),
-):
-    student = db.query(Student).filter(Student.id == student_id).first()
-    if not student:
-        raise HTTPException(status_code=404, detail="Student not found")
-
-    db.delete(student)
-    db.commit()
-    return None
-
-
-@router.post("/upload")
-async def upload_avatar(
-    student_id: int,
-    file: UploadFile = File(...),
-    current_user: SysUser = Depends(require_role(["admin", "teacher"])),
-    db: Session = Depends(get_db),
-):
-    student = db.query(Student).filter(Student.id == student_id).first()
-    if not student:
-        raise HTTPException(status_code=404, detail="Student not found")
-
-    filename = await save_upload_file(file)
-    student.avatar = filename
-    db.commit()
-
-    return {"avatar": filename}
-
-
-@router.post("/import")
-def import_students(
-    file: UploadFile = File(...),
-    current_user: SysUser = Depends(require_role(["admin"])),
-    db: Session = Depends(get_db),
-):
-    ext = file.filename.split(".")[-1]
-    if ext not in ["xlsx", "xls"]:
-        raise HTTPException(status_code=400, detail="Invalid file type")
-
-    temp_filename = f"{uuid.uuid4()}.{ext}"
-    temp_path = os.path.join("./backend/uploads", temp_filename)
-    os.makedirs("./backend/uploads", exist_ok=True)
-
-    with open(temp_path, "wb") as f:
-        f.write(file.file.read())
-
-    try:
-        records = read_excel_to_dicts(temp_path)
-
-        imported = 0
-        errors = []
-        for i, record in enumerate(records):
-            try:
-                existing = (
-                    db.query(Student).filter(Student.student_no == record.get("student_no")).first()
-                )
-                if existing:
-                    for key, value in record.items():
-                        if value is not None and hasattr(existing, key):
-                            setattr(existing, key, value)
-                else:
-                    student = Student(**{k: v for k, v in record.items() if v is not None})
-                    db.add(student)
-                imported += 1
-            except Exception as e:
-                errors.append(f"Row {i + 2}: {str(e)}")
-
-        db.commit()
-        return {"imported": imported, "errors": errors}
-    finally:
-        if os.path.exists(temp_path):
-            os.remove(temp_path)
-
-
-@router.get("/export")
-def export_students(
-    current_user: SysUser = Depends(get_current_user), db: Session = Depends(get_db)
-):
-    students = db.query(Student).all()
-
-    data = []
-    for s in students:
-        data.append(
-            {
-                "student_no": s.student_no,
-                "name": s.name,
-                "gender": "男" if s.gender == 0 else "女",
-                "age": s.age,
-                "grade": s.grade,
-                "class_name": s.class_name,
-                "phone": s.phone,
-                "address": s.address,
-                "email": s.email,
-                "status": ["在读", "休学", "毕业"][s.status] if s.status else "在读",
-            }
-        )
-
-    filename = f"students_{uuid.uuid4()}.xlsx"
-    filepath = os.path.join("./backend/uploads", filename)
-    os.makedirs("./backend/uploads", exist_ok=True)
-
-    export_dicts_to_excel(data, filepath)
-
-    return FileResponse(
-        filepath,
-        filename="students.xlsx",
-        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    逻辑：
+        1. 检查学生编号是否已存在
+        2. 如果存在且未删除 → 返回 None（不允许重复）
+        3. 如果存在但已删除 → 恢复并更新信息
+        4. 如果不存在 → 新建记录
+    """
+    existing = (
+        db.query(Student)
+        .filter(Student.student_no == new_student.student_no)
+        .first()
     )
+
+    if existing:
+        # 如果学生已存在且未删除，返回 None
+        if existing.isdeleted == 0:
+            return None
+
+        # 如果学生已存在但已删除，恢复并更新
+        existing.isdeleted = 0
+        existing.class_no = new_student.class_no
+        existing.name = new_student.name
+        existing.birth_place = new_student.birth_place
+        existing.graduate_school = new_student.graduate_school
+        existing.major = new_student.major
+        existing.entrance_time = new_student.entrance_time
+        existing.graduate_time = new_student.graduate_time
+        existing.education = new_student.education
+        existing.advisor_name = new_student.advisor_name
+        existing.age = new_student.age
+        existing.gender = new_student.gender
+        existing.phone = new_student.phone
+        existing.id_card = new_student.id_card
+        db.commit()
+        db.refresh(existing)
+        return existing
+
+    # 新建学生记录
+    db.add(new_student)
+    db.commit()
+    db.refresh(new_student)
+    return new_student
+
+
+def update_student_db(db: Session, student_no: str, update_student: Student):
+    """
+    更新学生信息。
+
+    只更新传入的字段（不为 None 的字段）。
+    """
+    try:
+        # 构建更新数据字典，只包含不为 None 的字段
+        update_data = {}
+        if update_student.class_no is not None:
+            update_data["class_no"] = update_student.class_no
+        if update_student.name is not None:
+            update_data["name"] = update_student.name
+        if update_student.birth_place is not None:
+            update_data["birth_place"] = update_student.birth_place
+        if update_student.graduate_school is not None:
+            update_data["graduate_school"] = update_student.graduate_school
+        if update_student.major is not None:
+            update_data["major"] = update_student.major
+        if update_student.entrance_time is not None:
+            update_data["entrance_time"] = update_student.entrance_time
+        if update_student.graduate_time is not None:
+            update_data["graduate_time"] = update_student.graduate_time
+        if update_student.education is not None:
+            update_data["education"] = update_student.education
+        if update_student.advisor_name is not None:
+            update_data["advisor_name"] = update_student.advisor_name
+        if update_student.age is not None:
+            update_data["age"] = update_student.age
+        if update_student.gender is not None:
+            update_data["gender"] = update_student.gender
+        if update_student.phone is not None:
+            update_data["phone"] = update_student.phone
+        if update_student.id_card is not None:
+            update_data["id_card"] = update_student.id_card
+
+        # 如果没有任何字段要更新，直接返回
+        if not update_data:
+            return True
+
+        # 执行更新
+        db.query(Student).filter(Student.student_no == student_no).update(update_data)
+        db.commit()
+        return True
+    except Exception:
+        raise HTTPException(status_code=400, detail='更新失败')
+
+
+def delete_student_db(db: Session, student_no: str, delete_student: int = 1):
+    """
+    软删除学生信息。
+
+    参数：
+        delete_student: 1 表示删除，0 表示恢复
+    """
+    try:
+        db.query(Student).filter(Student.student_no == student_no).update({
+            'isdeleted': delete_student
+        })
+        db.commit()
+        return True
+    except Exception:
+        raise HTTPException(status_code=400, detail='删除失败')
+
+
+def delete_back_db(db: Session, student_no: str, delete_student: int = 0):
+    """
+    恢复被软删除的学生信息。
+    """
+    try:
+        db.query(Student).filter(Student.student_no == student_no).update({
+            'isdeleted': delete_student
+        })
+        db.commit()
+        return True
+    except Exception:
+        raise HTTPException(status_code=400, detail='恢复失败')
+
+
+def get_student_by_class_db(db: Session, class_no: str):
+    """
+    按班级查询所有未删除的学生。
+    """
+    data = db.query(Student).filter(Student.class_no == class_no, Student.isdeleted == 0).all()
+    return data
+
+
+def search_student_db(db: Session, name: str):
+    """
+    根据姓名模糊查询学生。
+
+    比如查询 "张" 会匹配 "张三"、"张三丰" 等。
+    """
+    data = db.query(Student).filter(Student.name.like(f'%{name}%')).all()
+    return data

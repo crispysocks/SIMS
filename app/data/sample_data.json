@@ -1,0 +1,213 @@
+{
+  "teachers": [
+    {
+      "teacher_no": "T001",
+      "name": "张伟",
+      "gender": "男",
+      "phone": "13800138001",
+      "email": "zhangwei@example.com",
+      "id_card": "110101198001011234",
+      "birthday": "1980-01-01",
+      "hire_date": "2010-09-01",
+      "subject": "数学"
+    },
+    {
+      "teacher_no": "T002",
+      "name": "李娜",
+      "gender": "女",
+      "phone": "13800138002",
+      "email": "lina@example.com",
+      "id_card": "110101198502023456",
+      "birthday": "1985-02-02",
+      "hire_date": "2012-09-01",
+      "subject": "英语"
+    },
+    {
+      "teacher_no": "T003",
+      "name": "王强",
+      "gender": "男",
+      "phone": "13800138003",
+      "email": "wangqiang@example.com",
+      "id_card": "110101199003034567",
+      "birthday": "1990-03-03",
+      "hire_date": "2015-09-01",
+      "subject": "计算机"
+    }
+  ],
+  "classes": [
+    {
+      "class_no": "C001",
+      "class_name": "计算机科学与技术1班",
+      "class_open_time": "2023-09-01",
+      "head_teacher_no": "T003",
+      "instructor_no": "T003",
+      "description": "计算机科学与技术专业基础班"
+    },
+    {
+      "class_no": "C002",
+      "class_name": "软件工程2班",
+      "class_open_time": "2023-09-01",
+      "head_teacher_no": "T001",
+      "instructor_no": "T002",
+      "description": "软件工程专业进阶班"
+    }
+  ],
+  "students": [
+    {
+      "student_no": "S001",
+      "class_no": "C001",
+      "name": "刘洋",
+      "birth_place": "北京",
+      "graduate_school": "北京一中",
+      "major": "计算机科学与技术",
+      "entrance_time": "2023-09-01",
+      "graduate_time": "2027-07-01",
+      "education": "本科",
+      "advisor_name": "王强",
+      "age": 20,
+      "gender": "男",
+      "phone": "13900139001",
+      "id_card": "110101200401010011"
+    },
+    {
+      "student_no": "S002",
+      "class_no": "C001",
+      "name": "陈静",
+      "birth_place": "上海",
+      "graduate_school": "上海二中",
+      "major": "计算机科学与技术",
+      "entrance_time": "2023-09-01",
+      "graduate_time": "2027-07-01",
+      "education": "本科",
+      "advisor_name": "王强",
+      "age": 19,
+      "gender": "女",
+      "phone": "13900139002",
+      "id_card": "310101200502020022"
+    },
+    {
+      "student_no": "S003",
+      "class_no": "C002",
+      "name": "赵磊",
+      "birth_place": "广州",
+      "graduate_school": "广州三中",
+      "major": "软件工程",
+      "entrance_time": "2023-09-01",
+      "graduate_time": "2027-07-01",
+      "education": "本科",
+      "advisor_name": "张伟",
+      "age": 20,
+      "gender": "男",
+      "phone": "13900139003",
+      "id_card": "440101200403030033"
+    },
+    {
+      "student_no": "S004",
+      "class_no": "C002",
+      "name": "孙丽",
+      "birth_place": "深圳",
+      "graduate_school": "深圳四中",
+      "major": "软件工程",
+      "entrance_time": "2023-09-01",
+      "graduate_time": "2027-07-01",
+      "education": "本科",
+      "advisor_name": "李娜",
+      "age": 19,
+      "gender": "女",
+      "phone": "13900139004",
+      "id_card": "440301200504040044"
+    }
+  ],
+  "scores": [
+    {
+      "student_no": "S001",
+      "exam_no": 1,
+      "score": 85,
+      "exam_date": "2023-11-15"
+    },
+    {
+      "student_no": "S001",
+      "exam_no": 2,
+      "score": 90,
+      "exam_date": "2024-01-10"
+    },
+    {
+      "student_no": "S002",
+      "exam_no": 1,
+      "score": 88,
+      "exam_date": "2023-11-15"
+    },
+    {
+      "student_no": "S002",
+      "exam_no": 2,
+      "score": 92,
+      "exam_date": "2024-01-10"
+    },
+    {
+      "student_no": "S003",
+      "exam_no": 1,
+      "score": 78,
+      "exam_date": "2023-11-15"
+    },
+    {
+      "student_no": "S003",
+      "exam_no": 2,
+      "score": 82,
+      "exam_date": "2024-01-10"
+    },
+    {
+      "student_no": "S004",
+      "exam_no": 1,
+      "score": 91,
+      "exam_date": "2023-11-15"
+    },
+    {
+      "student_no": "S004",
+      "exam_no": 2,
+      "score": 95,
+      "exam_date": "2024-01-10"
+    }
+  ],
+  "employments": [
+    {
+      "student_no": "S001",
+      "employment_status": "在聘",
+      "employment_open_time": "2026-07-01T09:00:00",
+      "offer_time": "2026-06-15T14:30:00",
+      "company_name": "字节跳动",
+      "salary": 25000.00,
+      "position": "后端开发工程师",
+      "work_location": "北京"
+    },
+    {
+      "student_no": "S002",
+      "employment_status": "待业",
+      "employment_open_time": null,
+      "offer_time": null,
+      "company_name": null,
+      "salary": null,
+      "position": null,
+      "work_location": null
+    },
+    {
+      "student_no": "S003",
+      "employment_status": "在聘",
+      "employment_open_time": "2026-07-01T09:00:00",
+      "offer_time": "2026-05-20T10:00:00",
+      "company_name": "腾讯",
+      "salary": 22000.00,
+      "position": "前端开发工程师",
+      "work_location": "深圳"
+    },
+    {
+      "student_no": "S004",
+      "employment_status": "已离职",
+      "employment_open_time": "2026-03-01T09:00:00",
+      "offer_time": "2026-02-10T16:00:00",
+      "company_name": "阿里巴巴",
+      "salary": 20000.00,
+      "position": "测试工程师",
+      "work_location": "杭州"
+    }
+  ]
+}
