@@ -59,7 +59,7 @@ class Score(Base):
 
     # ---------- 联合主键定义 ----------
     # __table_args__ 用来设置表级别的配置
-    # PrimaryKeyConstraint 定义联合主键：学生编号 + 考试序次
+    # PrimaryKeyConstraint 定义联合主键（支持多个字段组成联合主键）：学生编号 + 考试序次
     __table_args__ = (
         PrimaryKeyConstraint('student_no', 'exam_no'),
     )

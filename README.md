@@ -128,7 +128,7 @@ npm run dev
 
 ## 认证与权限
 
-- **认证方式**：Header-based（`X-User`, `X-Roles`）
+- **认证方式**：JWT Token（`Authorization: Bearer <token>`）
 - **角色**：`admin`（管理员）、`teacher`（教师）
 - **权限控制**：
   - `admin`：拥有全部权限（删除、恢复、批量操作等）

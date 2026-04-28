@@ -17,20 +17,30 @@ SIMS（学生管理系统）为 Agent 提供了两个专用 HTTP 接口：
 1. **SQL 查询接口** (`POST /agent/sql/query`) — 直接执行 SELECT 查询
 2. **数据保存接口** (`POST /agent/save`) — 将数据保存到 xlsx 文件或数据库表
 
-Agent 的权限与 `teacher` 一致，调用接口时需要在请求头中携带模拟的教师身份认证信息（见下方认证说明）。
+Agent 的权限与 `teacher` 一致，调用接口时需要在请求头中携带 JWT Token（见下方认证说明）。
 
 ## 认证方式
 
-所有 Agent 接口需要 Header 认证（与系统现有认证一致）：
+所有 Agent 接口使用 JWT Token 认证（与系统现有认证一致）：
 
-- `X-User`: `agent`
-- `X-Roles`: `teacher`
+- 先调用 `/auth/login` 获取 token
+- 在请求头中携带 `Authorization: Bearer <token>`
 
 示例 curl（Windows PowerShell）：
 ```powershell
+# 1. 登录获取 token
+$loginBody = '{"username": "admin", "password": "123456"}' | ConvertTo-Json
+$loginResponse = Invoke-WebRequest -Uri http://localhost:8000/auth/login `
+  -Method POST `
+  -Headers @{"Content-Type"="application/json"} `
+  -Body $loginBody `
+  -UseBasicParsing
+$token = ($loginResponse.Content | ConvertFrom-Json).data.access_token
+
+# 2. 调用 Agent 接口
 Invoke-WebRequest -Uri http://localhost:8000/agent/sql/query `
   -Method POST `
-  -Headers @{"Content-Type"="application/json"; "X-User"="agent"; "X-Roles"="teacher"} `
+  -Headers @{"Content-Type"="application/json"; "Authorization"="Bearer $token"} `
   -Body '{"sql": "SELECT * FROM students WHERE isdeleted = 0 LIMIT 5"}' `
   -UseBasicParsing
 ```
@@ -255,7 +265,7 @@ $body = @{
 
 Invoke-WebRequest -Uri http://localhost:8000/agent/save `
   -Method POST `
-  -Headers @{"Content-Type"="application/json"; "X-User"="agent"; "X-Roles"="teacher"} `
+  -Headers @{"Content-Type"="application/json"; "Authorization"="Bearer $token"} `
   -Body $body `
   -UseBasicParsing
 ```

@@ -15,13 +15,12 @@
 #   - require_role: 检查用户是否有指定角色
 #
 # 认证方式：
-#   1. Header 认证（开发/测试用）：X-User 和 X-Roles 头部
-#   2. JWT Token 认证（生产用）：Authorization: Bearer <token>
+#   JWT Token 认证（标准方式）：Authorization: Bearer <token>
 # ============================================================
 
 from collections.abc import Callable
 
-from fastapi import Depends, Header, HTTPException, Request, status
+from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import BaseModel, Field
 
@@ -46,37 +45,25 @@ class CurrentUser(BaseModel):
 
 
 def get_current_user(
-    request: Request,
     credentials: HTTPAuthorizationCredentials | None = Depends(security),
 ) -> CurrentUser:
     """
     从请求中解析当前登录用户。
 
-    解析顺序：
-        1. 先检查 Header 中的 X-User 和 X-Roles（开发/测试用）
-        2. 如果没有，再检查 Authorization: Bearer <token>
+    使用 JWT Token 认证（标准方式）：
+        Authorization: Bearer <token>
 
     参数：
-        request: HTTP 请求对象，可以获取请求头
         credentials: 从 Authorization 头中提取的 Token
 
     返回值：
         CurrentUser 对象，包含用户名和角色列表
 
     异常情况：
-        - 没有提供任何认证信息 → 401 未授权
+        - 没有提供认证信息 → 401 未授权
         - Token 无效或过期 → 401 未授权
         - Token 中没有用户信息 → 401 未授权
     """
-    # 方式一：Header 认证（简单，适合开发和测试）
-    x_user = request.headers.get('X-User')
-    x_roles = request.headers.get('X-Roles')
-    if x_user and x_roles:
-        # 把逗号分隔的角色字符串转成列表
-        roles = [r.strip() for r in x_roles.split(',') if r.strip()]
-        return CurrentUser(username=x_user, roles=roles)
-
-    # 方式二：JWT Token 认证（标准方式）
     if not credentials or not credentials.credentials:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,

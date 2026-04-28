@@ -27,7 +27,7 @@ FastAPI Student Management System (SIMS). Python 3.12 + SQLAlchemy + MySQL + Rea
 ### 后端
 - `app/` is root package. Use `from app.core.config import settings` (not `from app.config`).
 - Entry point: `app/main.py` (includes all routers on startup, calls `init_db()`).
-- Auth: Header-based (`X-User`, `X-Roles`). Default roles: `admin`, `teacher`. See `app/dependencies.py`.
+- Auth: JWT Token (`Authorization: Bearer <token>`). Default roles: `admin`, `teacher`. See `app/dependencies.py`.
 
 ### 前端
 - Entry point: `frontend/src/main.tsx`
@@ -74,16 +74,26 @@ Agent 的权限与 `teacher` 一致，调用接口时需要在请求头中携带
 
 ## 认证方式
 
-所有 Agent 接口需要 Header 认证（与系统现有认证一致）：
+所有 Agent 接口使用 JWT Token 认证（与系统现有认证一致）：
 
-- `X-User`: `agent`
-- `X-Roles`: `teacher`
+- 先调用 `/auth/login` 获取 token
+- 在请求头中携带 `Authorization: Bearer <token>`
 
 示例 curl（Windows PowerShell）：
 ```powershell
+# 1. 登录获取 token
+$loginBody = '{"username": "admin", "password": "123456"}' | ConvertTo-Json
+$loginResponse = Invoke-WebRequest -Uri http://localhost:8000/auth/login `
+  -Method POST `
+  -Headers @{"Content-Type"="application/json"} `
+  -Body $loginBody `
+  -UseBasicParsing
+$token = ($loginResponse.Content | ConvertFrom-Json).data.access_token
+
+# 2. 调用 Agent 接口
 Invoke-WebRequest -Uri http://localhost:8000/agent/sql/query `
   -Method POST `
-  -Headers @{"Content-Type"="application/json"; "X-User"="agent"; "X-Roles"="teacher"} `
+  -Headers @{"Content-Type"="application/json"; "Authorization"="Bearer $token"} `
   -Body '{"sql": "SELECT * FROM students WHERE isdeleted = 0 LIMIT 5"}' `
   -UseBasicParsing
 ```
