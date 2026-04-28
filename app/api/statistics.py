@@ -21,9 +21,9 @@ from app.core.database import get_db
 from app.schemas.response import ApiResponse
 from app.services import statistics as statistics_service
 
-# 创建路由，所有以 /api/statistics 开头的请求都归这里处理
+# 创建路由，所有以 /statistics 开头的请求都归这里处理
 router = APIRouter(
-    prefix='/api/statistics',
+    prefix='/statistics',
     tags=['统计分析'],
 )
 
