@@ -1,3 +1,23 @@
+# ============================================================
+# services/statistics.py —— 统计分析业务逻辑
+# ============================================================
+# 这个文件负责处理各种统计查询。
+#
+# 统计分析的特点：
+#   - 只查询数据，不修改数据
+#   - 通常使用 SQL 的聚合函数（COUNT、AVG、SUM 等）
+#   - 经常需要 JOIN 多张表
+#
+# 包含的统计功能：
+#   - 按年龄查询学生
+#   - 班级性别统计
+#   - 每次考试都高于某分数的学生
+#   - 两次及以上不及格的学生
+#   - 班级平均成绩
+#   - 就业薪资最高的学生
+#   - 就业时长统计
+# ============================================================
+
 from sqlalchemy import case, func
 from sqlalchemy.orm import Session
 
@@ -7,7 +27,11 @@ from app.models.student import Student
 
 
 def find_students_by_age(db: Session, age: int = 30) -> list[dict]:
-    """查询年龄大于等于指定值的学生。"""
+    """
+    查询年龄大于等于指定值的学生。
+
+    默认查询年龄 >= 30 的学生。
+    """
     items = db.query(Student).filter(Student.isdeleted == 0, Student.age >= age).all()
     return [
         {
@@ -21,7 +45,13 @@ def find_students_by_age(db: Session, age: int = 30) -> list[dict]:
 
 
 def get_class_gender_stats(db: Session) -> list[dict]:
-    """统计每个班级的总人数和男女数量。"""
+    """
+    统计每个班级的总人数和男女数量。
+
+    使用 case 语句在 SQL 中实现条件计数：
+        - gender == '男' 时计 1，否则计 0
+        - 然后 SUM 就是男生总数
+    """
     rows = (
         db.query(
             Student.class_no,
@@ -46,12 +76,25 @@ def get_class_gender_stats(db: Session) -> list[dict]:
 
 
 def get_students_always_above_score(db: Session, score: int = 80) -> list[dict]:
-    """查询每次考试成绩都高于指定分数的学生。"""
+    """
+    查询每次考试成绩都高于指定分数的学生。
+
+    实现思路：
+        1. 先找出有成绩 <= 指定分数的学生（子查询）
+        2. 再查询不在这些学生中的记录
+    """
+    # 子查询：找出有不及格记录的学生
     failed_subquery = db.query(Score.student_no).filter(Score.isdeleted == 0, Score.score <= score)
+
     rows = (
         db.query(Student.student_no, Student.name, Score.score)
         .join(Score, Score.student_no == Student.student_no)
-        .filter(Student.isdeleted == 0, Score.isdeleted == 0, Student.student_no.not_in(failed_subquery))
+        .filter(
+            Student.isdeleted == 0,
+            Score.isdeleted == 0,
+            # not_in 表示"不在这个列表里"
+            Student.student_no.not_in(failed_subquery)
+        )
         .order_by(Student.student_no)
         .all()
     )
@@ -62,7 +105,15 @@ def get_students_always_above_score(db: Session, score: int = 80) -> list[dict]:
 
 
 def get_students_failed_twice_or_more(db: Session) -> list[dict]:
-    """查询两次及以上不及格的学生及对应成绩。"""
+    """
+    查询两次及以上不及格（< 60 分）的学生。
+
+    实现思路：
+        1. 按学生分组，统计不及格次数
+        2. 用 HAVING 筛选次数 >= 2 的学生
+        3. 再查询这些学生的具体不及格成绩
+    """
+    # 第一步：找出不及格次数 >= 2 的学生
     failed_ids_result = (
         db.query(Score.student_no)
         .filter(Score.isdeleted == 0, Score.score < 60)
@@ -75,6 +126,7 @@ def get_students_failed_twice_or_more(db: Session) -> list[dict]:
     if not failed_ids:
         return []
 
+    # 第二步：查询这些学生的不及格成绩
     rows = (
         db.query(Student.name, Student.class_no, Score.score)
         .join(Score, Score.student_no == Student.student_no)
@@ -95,7 +147,9 @@ def get_students_failed_twice_or_more(db: Session) -> list[dict]:
 
 
 def get_class_avg_scores_by_exam(db: Session) -> list[dict]:
-    """统计每个班级的平均成绩并按分数倒序排列。"""
+    """
+    统计每个班级的平均成绩，并按分数从高到低排列。
+    """
     rows = (
         db.query(Student.class_no, func.avg(Score.score).label('avg_score'))
         .join(Score, Score.student_no == Student.student_no)
@@ -108,7 +162,11 @@ def get_class_avg_scores_by_exam(db: Session) -> list[dict]:
 
 
 def get_top_salary_students(db: Session) -> list[dict]:
-    """统计就业薪资最高的前五名学生。"""
+    """
+    统计就业薪资最高的前五名学生。
+
+    使用 limit(5) 限制只返回前 5 条。
+    """
     rows = (
         db.query(Student.name, Student.class_no, Employment.offer_time, Employment.company_name, Employment.salary)
         .join(Employment, Employment.student_no == Student.student_no)
@@ -130,7 +188,13 @@ def get_top_salary_students(db: Session) -> list[dict]:
 
 
 def get_student_offer_duration(db: Session) -> list[dict]:
-    """统计每个学生的就业时长（offer_time - employment_open_time 的天数差）。"""
+    """
+    统计每个学生的就业时长。
+
+    就业时长 = offer_time - employment_open_time（天数差）
+
+    使用 timestampdiff 计算两个日期的天数差。
+    """
     rows = (
         db.query(
             Student.student_no,
@@ -148,7 +212,9 @@ def get_student_offer_duration(db: Session) -> list[dict]:
 
 
 def get_class_avg_offer_duration(db: Session) -> list[dict]:
-    """统计每个班级的平均就业时长。"""
+    """
+    统计每个班级的平均就业时长。
+    """
     rows = (
         db.query(
             Student.class_no,
@@ -157,7 +223,11 @@ def get_class_avg_offer_duration(db: Session) -> list[dict]:
             ).label('avg_days'),
         )
         .join(Employment, Employment.student_no == Student.student_no)
-        .filter(Student.isdeleted == 0, Employment.isdeleted == 0, Employment.employment_open_time.is_not(None))
+        .filter(
+            Student.isdeleted == 0,
+            Employment.isdeleted == 0,
+            Employment.employment_open_time.is_not(None)  # 排除空值
+        )
         .group_by(Student.class_no)
         .order_by(Student.class_no)
         .all()

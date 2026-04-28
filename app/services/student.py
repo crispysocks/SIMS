@@ -1,3 +1,18 @@
+# ============================================================
+# services/student.py —— 学生业务逻辑
+# ============================================================
+# 这个文件负责处理"学生"相关的具体业务操作。
+#
+# 包含的功能：
+#   - 检查学生是否存在、检查学生状态
+#   - 获取所有学生、获取单个学生
+#   - 添加学生（支持恢复已删除的记录）
+#   - 更新学生信息
+#   - 删除学生（逻辑删除）、恢复学生
+#   - 按班级查询学生
+#   - 按姓名模糊查询学生
+# ============================================================
+
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
@@ -5,7 +20,13 @@ from app.models.student import Student
 
 
 def chick_status(db: Session, new_student_no: str):
-    """检查学生状态，0返回False，1返回True。"""
+    """
+    检查学生状态。
+
+    返回值：
+        False: 学生已删除（isdeleted == 1）
+        True: 学生正常（isdeleted == 0）
+    """
     result = db.query(Student).all()
     for student in result:
         if student.student_no == new_student_no:
@@ -16,7 +37,13 @@ def chick_status(db: Session, new_student_no: str):
 
 
 def chick_student(db: Session, new_student_no: str):
-    """查询学生是否存在，存在返回True，不存在返回False。"""
+    """
+    检查学生是否存在（不管是否已删除）。
+
+    返回值：
+        True: 存在
+        False: 不存在
+    """
     result = db.query(Student).all()
     for student in result:
         if student.student_no == new_student_no:
@@ -25,7 +52,12 @@ def chick_student(db: Session, new_student_no: str):
 
 
 def get_students_db(db: Session):
-    """获取所有学生信息。。"""
+    """
+    获取所有未删除的学生信息。
+
+    注意：这里查询了所有学生再过滤，效率不高，
+    更好的做法是在查询时直接加上 isdeleted == 0 的条件。
+    """
     list1 = []
     result = db.query(Student).all()
     for student in result:
@@ -36,13 +68,20 @@ def get_students_db(db: Session):
 
 
 def get_student_db(db: Session, student_no: str):
-    """获取某个学生的信息。"""
+    """
+    根据学生编号获取单个学生信息（包含已删除的）。
+    """
     result = db.query(Student).filter(Student.student_no == student_no).first()
     return result
 
+
 # 已被组长弃用
 def student_response(new_student):
-    """公共响应体函数，返回学生信息（没有状态的信息）。"""
+    """
+    公共响应体函数，返回学生信息（没有状态的信息）。
+
+    这个函数已被弃用，现在直接使用 Pydantic 模型返回。
+    """
     if new_student is None:
         return None
     return {
@@ -64,9 +103,14 @@ def student_response(new_student):
 
 
 def add_student_db(db: Session, new_student: Student):
-    """添加单个学生。
+    """
+    添加单个学生。
 
-    若该学生已有被软删除的记录，则复用该记录并更新字段。
+    逻辑：
+        1. 检查学生编号是否已存在
+        2. 如果存在且未删除 → 返回 None（不允许重复）
+        3. 如果存在但已删除 → 恢复并更新信息
+        4. 如果不存在 → 新建记录
     """
     existing = (
         db.query(Student)
@@ -75,9 +119,11 @@ def add_student_db(db: Session, new_student: Student):
     )
 
     if existing:
+        # 如果学生已存在且未删除，返回 None
         if existing.isdeleted == 0:
             return None
 
+        # 如果学生已存在但已删除，恢复并更新
         existing.isdeleted = 0
         existing.class_no = new_student.class_no
         existing.name = new_student.name
@@ -96,6 +142,7 @@ def add_student_db(db: Session, new_student: Student):
         db.refresh(existing)
         return existing
 
+    # 新建学生记录
     db.add(new_student)
     db.commit()
     db.refresh(new_student)
@@ -103,9 +150,13 @@ def add_student_db(db: Session, new_student: Student):
 
 
 def update_student_db(db: Session, student_no: str, update_student: Student):
-    """更新学生的信息。"""
+    """
+    更新学生信息。
+
+    只更新传入的字段（不为 None 的字段）。
+    """
     try:
-        # 如果是空的，就不更新
+        # 构建更新数据字典，只包含不为 None 的字段
         update_data = {}
         if update_student.class_no is not None:
             update_data["class_no"] = update_student.class_no
@@ -134,10 +185,11 @@ def update_student_db(db: Session, student_no: str, update_student: Student):
         if update_student.id_card is not None:
             update_data["id_card"] = update_student.id_card
 
-        #  如果是个空字典，直接返回
+        # 如果没有任何字段要更新，直接返回
         if not update_data:
             return True
 
+        # 执行更新
         db.query(Student).filter(Student.student_no == student_no).update(update_data)
         db.commit()
         return True
@@ -146,7 +198,12 @@ def update_student_db(db: Session, student_no: str, update_student: Student):
 
 
 def delete_student_db(db: Session, student_no: str, delete_student: int = 1):
-    """软删除学生的信息。"""
+    """
+    软删除学生信息。
+
+    参数：
+        delete_student: 1 表示删除，0 表示恢复
+    """
     try:
         db.query(Student).filter(Student.student_no == student_no).update({
             'isdeleted': delete_student
@@ -158,7 +215,9 @@ def delete_student_db(db: Session, student_no: str, delete_student: int = 1):
 
 
 def delete_back_db(db: Session, student_no: str, delete_student: int = 0):
-    """恢复软删除学生信息。"""
+    """
+    恢复被软删除的学生信息。
+    """
     try:
         db.query(Student).filter(Student.student_no == student_no).update({
             'isdeleted': delete_student
@@ -170,12 +229,18 @@ def delete_back_db(db: Session, student_no: str, delete_student: int = 0):
 
 
 def get_student_by_class_db(db: Session, class_no: str):
-    """按班级查询学生（排除已逻辑删除的）。"""
+    """
+    按班级查询所有未删除的学生。
+    """
     data = db.query(Student).filter(Student.class_no == class_no, Student.isdeleted == 0).all()
     return data
 
 
 def search_student_db(db: Session, name: str):
-    """根据姓名模糊查询学生。"""
+    """
+    根据姓名模糊查询学生。
+
+    比如查询 "张" 会匹配 "张三"、"张三丰" 等。
+    """
     data = db.query(Student).filter(Student.name.like(f'%{name}%')).all()
     return data

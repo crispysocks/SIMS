@@ -1,3 +1,21 @@
+# ============================================================
+# services/employment_v2.py —— 就业信息业务逻辑（v2 版）
+# ============================================================
+# 这个文件是 employment.py 的升级版，支持更多功能。
+#
+# v2 和 v1 的区别：
+#   - 支持批量操作（批量删除、批量恢复）
+#   - student_no 在请求体里传入（不是 URL 参数）
+#   - 支持灵活的条件搜索
+#   - 返回的数据包含学生姓名和班级编号
+#
+# 包含的功能：
+#   - 添加、更新、查询单个就业信息
+#   - 按班级查询就业列表
+#   - 批量删除、批量恢复
+#   - 条件搜索
+# ============================================================
+
 from typing import List
 
 from sqlalchemy import and_
@@ -14,7 +32,13 @@ from app.schemas.employment_v2 import (
 
 
 def _check_student(db: Session, student_no: str) -> bool:
-    """检查学生是否存在且未被删除。"""
+    """
+    检查学生是否存在且未被删除。
+
+    返回值：
+        True: 学生存在且正常
+        False: 学生不存在或已删除
+    """
     student = (
         db.query(Student)
         .filter(Student.student_no == student_no, Student.isdeleted == 0)
@@ -24,9 +48,18 @@ def _check_student(db: Session, student_no: str) -> bool:
 
 
 def add_stu_test(db: Session, emp_model: EmploymentCreate):
-    """添加学生就业信息。
+    """
+    添加学生就业信息。
 
-    若该学生已有被软删除的记录，则复用该记录并更新字段。
+    逻辑：
+        1. 检查学生是否存在
+        2. 检查是否已有就业记录
+        3. 如果已有且已删除 → 恢复并更新
+        4. 如果没有 → 新建记录
+
+    返回值：
+        成功：就业记录对象
+        失败：None（学生不存在或记录已存在）
     """
     if not _check_student(db, emp_model.student_no):
         return None
@@ -38,9 +71,11 @@ def add_stu_test(db: Session, emp_model: EmploymentCreate):
     )
 
     if existing:
+        # 如果记录已存在且未删除，返回 None（不允许重复）
         if existing.isdeleted == 0:
             return None
 
+        # 如果记录已存在但已删除，恢复并更新
         existing.isdeleted = 0
         existing.employment_open_time = emp_model.employment_open_time
         existing.offer_time = emp_model.offer_time
@@ -53,6 +88,7 @@ def add_stu_test(db: Session, emp_model: EmploymentCreate):
         db.refresh(existing)
         return existing
 
+    # 新建就业记录
     emp = Employment(
         student_no=emp_model.student_no,
         employment_open_time=emp_model.employment_open_time,
@@ -71,7 +107,11 @@ def add_stu_test(db: Session, emp_model: EmploymentCreate):
 
 
 def update_stu_test(db: Session, student_no: str, emp_model: EmploymentUpdate):
-    """更新学生就业信息。"""
+    """
+    更新学生就业信息。
+
+    只更新传入的字段（逐个判断是否为 None）。
+    """
     emp = (
         db.query(Employment)
         .filter(Employment.student_no == student_no, Employment.isdeleted == 0)
@@ -102,7 +142,12 @@ def update_stu_test(db: Session, student_no: str, emp_model: EmploymentUpdate):
 
 
 def find_emp(db: Session, student_no: str):
-    """根据学生编号查询就业信息。"""
+    """
+    根据学生编号查询就业信息。
+
+    返回值：
+        就业记录对象，包含关联的学生信息
+    """
     re = (
         db.query(Employment)
         .join(Student, Employment.student_no == Student.student_no)
@@ -119,7 +164,12 @@ def find_emp(db: Session, student_no: str):
 
 
 def find_list_emp(db: Session, class_no: str):
-    """根据班级编号查询就业信息列表。"""
+    """
+    根据班级编号查询该班所有学生的就业信息。
+
+    返回值：
+        包含学生姓名等关联信息的字典列表
+    """
     re = (
         db.query(Employment, Student)
         .join(Student, Employment.student_no == Student.student_no)
@@ -135,6 +185,7 @@ def find_list_emp(db: Session, class_no: str):
     if not re:
         return {'message': '您查找的班级不存在或该班级无就业信息'}
 
+    # 把查询结果组装成字典列表
     data = [
         {
             'student_no': emp.student_no,
@@ -153,7 +204,12 @@ def find_list_emp(db: Session, class_no: str):
 
 
 def del_emp(db: Session, student_nos: List[str]):
-    """软删除就业信息。"""
+    """
+    批量软删除就业信息。
+
+    参数：
+        student_nos: 学生编号列表
+    """
     emps = (
         db.query(Employment)
         .filter(
@@ -174,7 +230,12 @@ def del_emp(db: Session, student_nos: List[str]):
 
 
 def del_emp_back(db: Session, student_nos: List[str]):
-    """恢复被软删除的就业信息。"""
+    """
+    批量恢复被软删除的就业信息。
+
+    参数：
+        student_nos: 学生编号列表
+    """
     emps = (
         db.query(Employment)
         .filter(
@@ -195,13 +256,27 @@ def del_emp_back(db: Session, student_nos: List[str]):
 
 
 def search_emp_list(db: Session, query: EmploymentQuery):
-    """条件搜索就业信息。"""
+    """
+    条件搜索就业信息。
+
+    支持的条件：
+        - student_no: 学生编号（精确匹配）
+        - company_name: 公司名称（模糊匹配）
+        - min_salary / max_salary: 薪资范围
+        - employment_status: 就业状态
+        - position: 岗位（模糊匹配）
+        - work_location: 工作地点（模糊匹配）
+
+    返回值：
+        包含学生姓名和班级编号的 EmploymentSearchResponse 列表
+    """
     re = (
         db.query(Employment, Student.name, Student.class_no)
         .join(Student, Employment.student_no == Student.student_no)
         .filter(Student.isdeleted == 0)
     )
 
+    # 逐个条件判断，如果有值就加上过滤条件
     if query.student_no:
         re = re.filter(Employment.student_no == query.student_no)
 
@@ -223,8 +298,10 @@ def search_emp_list(db: Session, query: EmploymentQuery):
     if query.work_location:
         re = re.filter(Employment.work_location.like(f'%{query.work_location}%'))
 
+    # 只返回未删除的记录
     results = re.filter(Employment.isdeleted == 0).all()
 
+    # 把查询结果转成 Pydantic 模型列表
     return [
         EmploymentSearchResponse(
             student_no=emp.student_no,
