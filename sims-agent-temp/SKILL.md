@@ -17,7 +17,7 @@ SIMS（学生管理系统）为 Agent 提供了两个专用 HTTP 接口：
 1. **SQL 查询接口** (`POST /agent/sql/query`) — 直接执行 SELECT 查询
 2. **数据保存接口** (`POST /agent/save`) — 将数据保存到 xlsx 文件或数据库表
 
-Agent 的权限与 `teacher` 一致，调用接口时需要在请求头中携带 JWT Token（见下方认证说明）。
+Agent 接口的权限要求为 `admin` 或 `teacher`，调用接口时需要在请求头中携带真实的 JWT Token（见下方认证说明）。
 
 ## 认证方式
 
@@ -28,8 +28,8 @@ Agent 的权限与 `teacher` 一致，调用接口时需要在请求头中携带
 
 示例 curl（Windows PowerShell）：
 ```powershell
-# 1. 登录获取 token
-$loginBody = '{"username": "admin", "password": "123456"}' | ConvertTo-Json
+# 1. 登录获取 token（使用哈希表转 JSON，避免双重转义）
+$loginBody = @{username="admin"; password="123456"} | ConvertTo-Json
 $loginResponse = Invoke-WebRequest -Uri http://localhost:8000/auth/login `
   -Method POST `
   -Headers @{"Content-Type"="application/json"} `
@@ -37,11 +37,12 @@ $loginResponse = Invoke-WebRequest -Uri http://localhost:8000/auth/login `
   -UseBasicParsing
 $token = ($loginResponse.Content | ConvertFrom-Json).data.access_token
 
-# 2. 调用 Agent 接口
+# 2. 调用 Agent 接口（请求体也用哈希表转 JSON）
+$queryBody = @{sql="SELECT * FROM students WHERE isdeleted = 0 LIMIT 5"; params=$null} | ConvertTo-Json
 Invoke-WebRequest -Uri http://localhost:8000/agent/sql/query `
   -Method POST `
   -Headers @{"Content-Type"="application/json"; "Authorization"="Bearer $token"} `
-  -Body '{"sql": "SELECT * FROM students WHERE isdeleted = 0 LIMIT 5"}' `
+  -Body $queryBody `
   -UseBasicParsing
 ```
 
@@ -161,9 +162,11 @@ Invoke-WebRequest -Uri http://localhost:8000/agent/sql/query `
 ```json
 {
   "sql": "SELECT student_no, name, gender FROM students WHERE isdeleted = 0 LIMIT 10",
-  "params": {}
+  "params": null
 }
 ```
+
+> `params` 为可选字段，用于参数化查询（如 `"sql": "SELECT * FROM students WHERE class_no = :class_no"`，`"params": {"class_no": "C001"}`）。不传时设为 `null` 或省略即可。
 
 **安全限制**：
 - 仅允许 `SELECT` 语句
@@ -269,6 +272,8 @@ Invoke-WebRequest -Uri http://localhost:8000/agent/save `
   -Body $body `
   -UseBasicParsing
 ```
+
+> 注意：`data` 字段的值是数组（列表），即使只有一条记录也要用 `[{...}]` 格式。
 
 ## 常用查询模板
 
