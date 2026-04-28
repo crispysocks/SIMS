@@ -122,9 +122,13 @@ def _validate_select_only(sql: str) -> None:
         )
 
     # 禁止出现这些危险关键字
+    # 使用正则表达式按单词边界匹配，避免字段名如 isdeleted 被误判
+    import re
     forbidden = ['insert', 'update', 'delete', 'drop', 'truncate', 'alter', 'create', 'grant', 'revoke']
     for keyword in forbidden:
-        if keyword in stripped:
+        # \b 表示单词边界，确保匹配的是独立的关键字，而不是其他单词的一部分
+        pattern = r'\b' + keyword + r'\b'
+        if re.search(pattern, stripped):
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=f'SQL中包含禁止的关键字: {keyword}',

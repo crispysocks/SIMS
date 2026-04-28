@@ -26,14 +26,16 @@ Agent 的权限与 `teacher` 一致，调用接口时需要在请求头中携带
 - `X-User`: `agent`
 - `X-Roles`: `teacher`
 
-示例 curl：
-```bash
-curl -X POST http://localhost:8000/agent/sql/query \
-  -H "Content-Type: application/json" \
-  -H "X-User: agent" \
-  -H "X-Roles: teacher" \
-  -d '{"sql": "SELECT * FROM students LIMIT 5"}'
+示例 curl（Windows PowerShell）：
+```powershell
+Invoke-WebRequest -Uri http://localhost:8000/agent/sql/query `
+  -Method POST `
+  -Headers @{"Content-Type"="application/json"; "X-User"="agent"; "X-Roles"="teacher"} `
+  -Body '{"sql": "SELECT * FROM students WHERE isdeleted = 0 LIMIT 5"}' `
+  -UseBasicParsing
 ```
+
+> 注意：PowerShell 终端可能显示中文乱码，这是终端编码问题，接口实际返回的是正确的 UTF-8 编码数据。如需确认中文正常，可用 `uv run python` 调用 `urllib.request` 测试。
 
 ## 数据库表结构
 
@@ -65,6 +67,7 @@ curl -X POST http://localhost:8000/agent/sql/query \
 **安全限制**：
 - 仅允许 `SELECT` 语句
 - 禁止包含以下关键字：`insert`, `update`, `delete`, `drop`, `truncate`, `alter`, `create`, `grant`, `revoke`
+- 安全过滤使用单词边界匹配，字段名如 `isdeleted` 不会被误判（已修复）
 
 **响应示例**：
 ```json
@@ -180,7 +183,7 @@ ORDER BY s.student_no, sc.exam_date;
 接口返回标准 `ApiResponse` 格式，错误时 `data` 为 `null`，`message` 包含错误详情。常见错误：
 
 - `仅允许执行SELECT查询语句` — SQL 中包含非 SELECT 语句
-- `SQL中包含禁止的关键字: xxx` — 触发了安全限制
+- `SQL中包含禁止的关键字: xxx` — 触发了安全限制（使用单词边界匹配，不会误判字段名）
 - `SQL执行错误: ...` — 语法错误或表不存在
 - `保存xlsx失败: ...` — 文件路径无效或磁盘空间不足
 - `写入数据库失败: ...` — 表结构不匹配或数据库错误
